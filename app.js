@@ -1,7 +1,5 @@
 // ============================
 // UGNAI — app.js
-// Calls /api/generate (server-side proxy).
-// Users never see or need an API key.
 // ============================
 
 const S = {
@@ -13,7 +11,7 @@ const S = {
   batch:    {},
 };
 
-// ── ONBOARDING ──────────────────────────────────
+// ONBOARDING 
 let obStep = 1;
 function initOnboard() {
   if (!localStorage.getItem('ugnai_seen'))
@@ -36,7 +34,7 @@ document.getElementById('ob-next')?.addEventListener('click', () => {
     document.getElementById('ob-next').textContent = 'Sige na!';
 });
 
-// ── WORD COUNT ───────────────────────────────────
+// WORD COUNT
 const notesEl = document.getElementById('notes');
 notesEl?.addEventListener('input', () => {
   const words = notesEl.value.trim().split(/\s+/).filter(Boolean).length;
@@ -49,7 +47,7 @@ notesEl?.addEventListener('input', () => {
   document.getElementById('warn').innerHTML = msg;
 });
 
-// ── AUDIENCE ─────────────────────────────────────
+// AUDIENCE
 document.querySelectorAll('.aud').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('.aud').forEach(x => x.classList.remove('on'));
@@ -60,7 +58,7 @@ document.querySelectorAll('.aud').forEach(b => {
   });
 });
 
-// ── FORMAT CHIPS ─────────────────────────────────
+// FORMAT CHIPS 
 function setChip(f) {
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
   const t = document.querySelector(`.chip[data-f="${f}"]`);
@@ -74,7 +72,7 @@ document.querySelectorAll('.chip').forEach(c => {
   });
 });
 
-// ── LANGUAGE ─────────────────────────────────────
+// LANGUAGE
 document.querySelectorAll('#lang-pills .pill').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('#lang-pills .pill').forEach(x => x.classList.remove('on'));
@@ -82,7 +80,7 @@ document.querySelectorAll('#lang-pills .pill').forEach(b => {
   });
 });
 
-// ── TONE ─────────────────────────────────────────
+// TONE
 document.querySelectorAll('#tone-pills .pill').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('#tone-pills .pill').forEach(x => x.classList.remove('on'));
@@ -90,7 +88,7 @@ document.querySelectorAll('#tone-pills .pill').forEach(b => {
   });
 });
 
-// ── TEMPLATES ────────────────────────────────────
+// TEMPLATES 
 const TMPLS = {
   'parent-advisory':
 `[Teacher name] Class Advisory — [Date]
@@ -177,13 +175,13 @@ document.getElementById('tmpl')?.addEventListener('change', e => {
   e.target.value = '';
 });
 
-// ── PROMPT BUILDER ───────────────────────────────
+// PROMPT BUILDER
 function buildPrompt(input, aud, fmt, lang, tone) {
   const audMap = {
-    parents:   'parents of students (warm, casual, relational Filipino parent-communication style)',
-    students:  'students (simple vocabulary, encouraging, age-appropriate)',
-    deped:     'DepEd officials or school administrators (formal, professional, DepEd-standard language)',
-    principal: 'the school principal (professional, concise, respectful)',
+    parents:   'parents of Filipino public school students — write like a teacher messaging a parent Viber group. Short, clear, warm, conversational. No stiff or ceremonial language.',
+    students:  'Filipino public school students — write like a teacher talking directly to their class. Simple words, friendly, encouraging. Can use Taglish naturally.',
+    deped:     'DepEd officials or school administrators — professional and clear, but not robotic. Straightforward sentences, no filler. Standard DepEd memo style.',
+    principal: 'the school principal — brief and respectful, like a quick memo or hallway update. Get to the point fast.',
   };
   const fmtMap = {
     'letter':          'a letter with greeting, body paragraphs, and polite closing',
@@ -214,9 +212,8 @@ ${input}
 Output the reformatted draft only. No explanation, no meta-commentary.`;
 }
 
-// ── API CALL via proxy ───────────────────────────
+// API CALL via proxy
 // Calls /api/generate — a Vercel serverless function that holds the API key.
-// Users never see or touch the key.
 async function callAPI(prompt) {
   const res = await fetch('/api/generate', {
     method: 'POST',
@@ -231,7 +228,7 @@ async function callAPI(prompt) {
   return d.text;
 }
 
-// ── GENERATE SINGLE ──────────────────────────────
+// GENERATE SINGLE 
 async function genSingle() {
   const input = notesEl.value.trim();
   if (!input) { alert('Isulat mo muna ang tala mo.'); return; }
@@ -260,7 +257,7 @@ async function genSingle() {
 document.getElementById('gen-btn')?.addEventListener('click', genSingle);
 document.getElementById('regen-btn')?.addEventListener('click', genSingle);
 
-// ── BATCH GENERATE ───────────────────────────────
+// BATCH GENERATE
 async function genBatch() {
   const input = notesEl.value.trim();
   if (!input) { alert('Isulat mo muna ang tala mo.'); return; }
@@ -278,13 +275,21 @@ async function genBatch() {
   auds.forEach(a => { document.getElementById(`b-${a}`).textContent = 'Generating...'; });
 
   try {
-    const results = await Promise.all(
-      auds.map(a => callAPI(buildPrompt(input, a, fmts[a], S.language, S.tone)).catch(e => `Error: ${e.message}`))
-    );
-    auds.forEach((a, i) => {
-      S.batch[a] = results[i];
-      document.getElementById(`b-${a}`).textContent = results[i];
-    });
+    // Sequential with 1.2s delay between calls — avoids rate limits on free tier keys
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+    for (let i = 0; i < auds.length; i++) {
+      const a = auds[i];
+      document.getElementById(`b-${a}`).textContent = 'Ginagawa...';
+      try {
+        const result = await callAPI(buildPrompt(input, a, fmts[a], S.language, S.tone));
+        S.batch[a] = result;
+        document.getElementById(`b-${a}`).textContent = result;
+      } catch (e) {
+        S.batch[a] = `Hindi nagawa: ${e.message}`;
+        document.getElementById(`b-${a}`).textContent = `Hindi nagawa: ${e.message}`;
+      }
+      if (i < auds.length - 1) await delay(1200);
+    }
     saveHist({ input, output: '[Batch] Para sa lahat generated', batchOutputs: { ...S.batch }, audience: 'batch', format: 'batch', language: S.language, tone: S.tone });
   } catch (e) {
     auds.forEach(a => { document.getElementById(`b-${a}`).textContent = `Error: ${e.message}`; });
@@ -294,7 +299,7 @@ async function genBatch() {
 }
 document.getElementById('batch-btn')?.addEventListener('click', genBatch);
 
-// ── BATCH COPY ───────────────────────────────────
+// BATCH COPY
 document.querySelectorAll('.bc').forEach(b => {
   b.addEventListener('click', () => {
     const txt = S.batch[b.dataset.t] || '';
@@ -307,7 +312,7 @@ document.querySelectorAll('.bc').forEach(b => {
   });
 });
 
-// ── COPY ─────────────────────────────────────────
+// COPY
 document.getElementById('copy-btn')?.addEventListener('click', () => {
   if (!S.output) return;
   navigator.clipboard.writeText(S.output).then(() => {
@@ -320,7 +325,7 @@ document.getElementById('copy-btn')?.addEventListener('click', () => {
   });
 });
 
-// ── PDF ──────────────────────────────────────────
+// PDF
 document.getElementById('pdf-btn')?.addEventListener('click', () => {
   if (!S.output) { alert('Wala pang output. Mag-generate muna.'); return; }
   const { jsPDF } = window.jspdf;
@@ -346,7 +351,7 @@ document.getElementById('pdf-btn')?.addEventListener('click', () => {
   doc.save(`UGNai_${S.audience}_${Date.now()}.pdf`);
 });
 
-// ── FEEDBACK ─────────────────────────────────────
+// FEEDBACK
 document.querySelectorAll('.fb').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('.fb').forEach(x => x.classList.remove('on'));
@@ -357,7 +362,7 @@ document.querySelectorAll('.fb').forEach(b => {
   });
 });
 
-// ── HISTORY ──────────────────────────────────────
+// HISTORY
 function saveHist(entry) {
   const h = JSON.parse(localStorage.getItem('ugnai_hist') || '[]');
   h.unshift({ ...entry, id: Date.now(), ts: new Date().toISOString() });
@@ -420,7 +425,7 @@ document.getElementById('hist-clear')?.addEventListener('click', () => {
   renderHist();
 });
 
-// ── INIT ─────────────────────────────────────────
+// INIT
 (function init() {
   initOnboard();
   renderHist();
