@@ -1,6 +1,5 @@
 // ============================
 // UGNAI — app.js
-// Calls /api/generate (server-side proxy).
 // ============================
 
 const S = {
@@ -192,6 +191,13 @@ function buildPrompt(input, aud, fmt, lang, tone) {
     'reminder':        'a brief reminder notice with key dates and action items highlighted',
     'weekly':          'a weekly update with sections for covered topics, upcoming items, and reminders',
   };
+  const toneMap = {
+    warm:        'conversational and caring — like texting a friend or a parent you know well. Use "po" naturally but not excessively. Example: "Hi! Gusto lang i-remind na may quiz tayo this Friday."',
+    formal:      'professional and clear — no slang, complete sentences, respectful. Like a formal memo but still readable.',
+    simple:      'super easy to understand — short sentences, common words only, like explaining to a student or a parent who may not be confident in Filipino.',
+    encouraging: 'positive and motivating — acknowledge effort, use affirming words. Like a teacher cheering on their students or thanking parents.',
+  };
+
   return `You are a formatting assistant for Filipino public school teachers. Your ONLY job is to reformat the teacher's notes for a specific audience.
 
 STRICT RULES:
@@ -199,28 +205,29 @@ STRICT RULES:
 - Do NOT invent any detail. If something is missing, write [placeholder in brackets].
 - Do NOT change the meaning of anything the teacher wrote.
 - Only adjust language, tone, and format.
+- Output plain text only — no asterisks, no bold, no markdown headers.
 
 Audience: ${audMap[aud] || aud}
 Format: ${fmtMap[fmt] || fmt}
-Output language: ${lang}${lang === 'Taglish' ? ' (mix Filipino and English naturally, as Filipino teachers do in everyday communication)' : ''}
-Tone: ${tone}
+Output language: ${lang}${lang === 'Taglish' ? ' — mix Filipino and English naturally, the way Filipino teachers actually text and talk, not forced translations' : ''}
+Tone: ${toneMap[tone] || tone}
 
 Teacher's notes:
 ---
 ${input}
 ---
 
-Output the reformatted draft only. No explanation, no meta-commentary.`;
+Output the reformatted draft only. No explanation, no intro sentence, no meta-commentary.`;
 }
 
 // API CALL via proxy
 // Calls /api/generate — a Vercel serverless function that holds the API key.
 // Users never see or touch the key.
-async function callAPI(prompt) {
+async function callAPI(prompt, keyHint = 0) {
   const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, keyHint }),
   });
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
@@ -295,7 +302,7 @@ async function genBatch() {
       const a = auds[i];
       document.getElementById(`b-${a}`).textContent = 'Ginagawa...';
       try {
-        const result = await callAPI(buildPrompt(input, a, fmts[a], S.language, S.tone));
+        const result = await callAPI(buildPrompt(input, a, fmts[a], S.language, S.tone), i);
         S.batch[a] = result;
         document.getElementById(`b-${a}`).textContent = result;
       } catch (e) {
