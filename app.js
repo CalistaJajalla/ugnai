@@ -1,5 +1,6 @@
 // ============================
 // UGNAI — app.js
+// Calls /api/generate (server-side proxy).
 // ============================
 
 const S = {
@@ -11,7 +12,7 @@ const S = {
   batch:    {},
 };
 
-// ONBOARDING 
+// ONBOARDING
 let obStep = 1;
 function initOnboard() {
   if (!localStorage.getItem('ugnai_seen'))
@@ -58,7 +59,7 @@ document.querySelectorAll('.aud').forEach(b => {
   });
 });
 
-// FORMAT CHIPS 
+// FORMAT CHIPS
 function setChip(f) {
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
   const t = document.querySelector(`.chip[data-f="${f}"]`);
@@ -88,7 +89,7 @@ document.querySelectorAll('#tone-pills .pill').forEach(b => {
   });
 });
 
-// TEMPLATES 
+// TEMPLATES
 const TMPLS = {
   'parent-advisory':
 `[Teacher name] Class Advisory — [Date]
@@ -178,10 +179,10 @@ document.getElementById('tmpl')?.addEventListener('change', e => {
 // PROMPT BUILDER
 function buildPrompt(input, aud, fmt, lang, tone) {
   const audMap = {
-    parents:   'parents of Filipino public school students — write like a teacher messaging a parent Viber group. Short, clear, warm, conversational. No stiff or ceremonial language.',
-    students:  'Filipino public school students — write like a teacher talking directly to their class. Simple words, friendly, encouraging. Can use Taglish naturally.',
-    deped:     'DepEd officials or school administrators — professional and clear, but not robotic. Straightforward sentences, no filler. Standard DepEd memo style.',
-    principal: 'the school principal — brief and respectful, like a quick memo or hallway update. Get to the point fast.',
+    parents:   'parents of Filipino public school students. Tone: like a teacher texting a Viber parent group — warm, short, direct, conversational Taglish. Example opener: "Hi mga parents! Gusto lang i-remind..."',
+    students:  'Filipino public school students. Tone: like a teacher talking to their class — chill, clear, encouraging. Example opener: "Hoy class, may quiz tayo this Friday..."',
+    deped:     'DepEd officials or school administrators. Tone: professional but human, no bureaucratic filler. Clear subject line, short body, direct.',
+    principal: 'the school principal. Tone: brief and respectful, like a hallway update turned into a short memo. Two paragraphs max.',
   };
   const fmtMap = {
     'letter':          'a letter with greeting, body paragraphs, and polite closing',
@@ -214,6 +215,7 @@ Output the reformatted draft only. No explanation, no meta-commentary.`;
 
 // API CALL via proxy
 // Calls /api/generate — a Vercel serverless function that holds the API key.
+// Users never see or touch the key.
 async function callAPI(prompt) {
   const res = await fetch('/api/generate', {
     method: 'POST',
@@ -225,10 +227,22 @@ async function callAPI(prompt) {
     throw new Error(e.error || `Server error ${res.status}`);
   }
   const d = await res.json();
-  return d.text;
+  // Strip any markdown formatting Claude might still produce
+  return stripMarkdown(d.text);
 }
 
-// GENERATE SINGLE 
+function stripMarkdown(text) {
+  if (!text) return text;
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')   // **bold** -> bold
+    .replace(/\*(.+?)\*/g, '$1')        // *italic* -> italic
+    .replace(/^#{1,6}\s+/gm, '')        // ### headers
+    .replace(/^[-*]\s+/gm, '• ')        // - bullet -> • bullet (readable)
+    .replace(/^\d+\.\s+/gm, '')         // 1. numbered list markers
+    .trim();
+}
+
+// GENERATE SINGLE
 async function genSingle() {
   const input = notesEl.value.trim();
   if (!input) { alert('Isulat mo muna ang tala mo.'); return; }
