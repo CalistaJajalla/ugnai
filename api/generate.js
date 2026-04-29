@@ -18,10 +18,10 @@ function isRateLimited(ip) {
   return false;
 }
 
-// 2. SMART KEY ROTATION WITH COOLDOWN
-// Tracks which keys recently hit rate limits so we skip them for 60s
-const keyCooldowns = new Map(); // { keyIndex: cooldownUntilTimestamp }
-const KEY_COOLDOWN = 60 * 1000;
+// 2. KEY ROTATION
+// Vercel is stateless so we can't track cooldowns in memory across requests.
+// Instead we shuffle all keys randomly on every request so load spreads
+// naturally. If a key returns 429 we skip it and try the next one.
 
 function getKeys() {
   const keys = [];
@@ -33,22 +33,6 @@ function getKeys() {
     keys.push({ key: process.env.ANTHROPIC_API_KEY, index: 0 });
   }
   return keys;
-}
-
-function getAvailableKeys(keys) {
-  const now = Date.now();
-  // Filter out keys still in cooldown
-  const available = keys.filter(({ index }) => {
-    const coolUntil = keyCooldowns.get(index) || 0;
-    return now > coolUntil;
-  });
-  // If all keys are cooling down, just use all of them anyway
-  // (better to try than to give up)
-  return available.length > 0 ? available : keys;
-}
-
-function markKeyCoolingDown(index) {
-  keyCooldowns.set(index, Date.now() + KEY_COOLDOWN);
 }
 
 function shuffled(arr) {
@@ -172,16 +156,15 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Hindi pa naka-configure ang serbisyo.' });
   }
 
-  const available = shuffled(getAvailableKeys(allKeys));
+  const available = shuffled(allKeys);
 
-  // Try each available key -- skip rate-limited ones
-  for (const { key, index } of available) {
+  // Try each key in random order -- skip any that are rate limited
+  for (const { key } of available) {
     try {
       const response = await callClaude(key, safePrompt);
 
       if (response.status === 429) {
-        // Mark this key as cooling down and try next
-        markKeyCoolingDown(index);
+        // This key is busy, try the next one
         continue;
       }
 
