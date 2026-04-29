@@ -1,5 +1,6 @@
 // ============================
 // UGNAI — app.js
+// Calls /api/generate (server-side proxy).
 // ============================
 
 const S = {
@@ -223,19 +224,34 @@ Output the reformatted draft only. No explanation, no intro sentence, no meta-co
 // API CALL via proxy
 // Calls /api/generate — a Vercel serverless function that holds the API key.
 // Users never see or touch the key.
-async function callAPI(prompt, keyHint = 0) {
-  const res = await fetch('/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, keyHint }),
-  });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.error || `Server error ${res.status}`);
+async function callAPI(prompt, keyHint = 0, attempt = 0) {
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, keyHint }),
+    });
+    // If rate limited or server error, retry up to 3 times with backoff
+    if (res.status === 429 || res.status >= 500) {
+      if (attempt < 3) {
+        await delay(1500 * (attempt + 1)); // 1.5s, 3s, 4.5s
+        return callAPI(prompt, keyHint + 1, attempt + 1);
+      }
+    }
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || `Server error ${res.status}`);
+    }
+    const d = await res.json();
+    return stripMarkdown(d.text);
+  } catch (err) {
+    if (attempt < 3) {
+      await delay(1500 * (attempt + 1));
+      return callAPI(prompt, keyHint + 1, attempt + 1);
+    }
+    throw err;
   }
-  const d = await res.json();
-  // Strip any markdown formatting Claude might still produce
-  return stripMarkdown(d.text);
 }
 
 function stripMarkdown(text) {
