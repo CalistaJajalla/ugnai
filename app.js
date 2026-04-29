@@ -286,7 +286,7 @@ async function genSingle() {
     document.getElementById('out-text').textContent = result;
     saveHist({ input, output: result, audience: S.audience, format: S.format, language: S.language, tone: S.tone });
   } catch (err) {
-    document.getElementById('out-text').textContent = `May problema. Subukan ulit.: ${err.message}\n\nPlease try again.`;
+    document.getElementById('out-text').textContent = `May problema. Subukan ulit mamaya.`;
   } finally {
     btn.disabled = false; lbl.classList.remove('hidden'); spn.classList.add('hidden');
   }
@@ -325,7 +325,7 @@ async function genBatch() {
         S.batch[a] = `Hindi nagawa: ${e.message}`;
         document.getElementById(`b-${a}`).textContent = `Hindi nagawa: ${e.message}`;
       }
-      if (i < auds.length - 1) await delay(1200);
+      if (i < auds.length - 1) await delay(2000);
     }
     saveHist({ input, output: '[Batch] Para sa lahat generated', batchOutputs: { ...S.batch }, audience: 'batch', format: 'batch', language: S.language, tone: S.tone });
   } catch (e) {
