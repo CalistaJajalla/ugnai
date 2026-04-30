@@ -1,4 +1,4 @@
-// tutorial.js — Step-by-step guided walkthrough
+// tutorial.js: Step-by-step guided walkthrough
 // Highlights real UI elements with a spotlight effect.
 // Only shows on first visit. Can be dismissed anytime.
 
@@ -7,7 +7,7 @@ const STEPS = [
     target: 'tut-target-notes',
     icon:  'i-pen',
     title: 'Isulat ang iyong tala',
-    body:  'I-type o i-paste ang iyong lesson notes, announcements, o anumang mensahe dito. Huwag mag-alala sa format — magsulat lang ng natural sa wikang komportable mo.',
+    body:  'I-type o i-paste ang iyong lesson notes, announcements, o anumang mensahe dito. Huwag mag-alala sa format, magsulat lang ng natural sa wikang komportable mo.',
     pos:   'right',
   },
   {
@@ -21,21 +21,21 @@ const STEPS = [
     target: null,
     icon:  'i-spark',
     title: 'Format at wika',
-    body:  'Piliin kung anong uri ng dokumento (liham, bulletin, report) at sa anong wika. Maaari ring piliin ang tono — mainit para sa magulang, pormal para sa DepEd.',
+    body:  'Piliin kung anong uri ng dokumento (liham, bulletin, report) at sa anong wika. Maaari ring piliin ang tono: mainit para sa magulang, pormal para sa DepEd.',
     pos:   'center',
   },
   {
     target: 'tut-target-generate',
     icon:  'i-spark',
     title: 'I-generate ang draft',
-    body:  'I-click ang "I-generate" para sa isang output, o "Lahat ng Madla" para makakuha ng apat na bersyon nang sabay-sabay — para sa magulang, mag-aaral, DepEd, at punong-guro.',
+    body:  'I-click ang "I-generate" para sa isang output, o "Lahat ng Madla" para makakuha ng apat na bersyon nang sabay-sabay: para sa magulang, mag-aaral, DepEd, at punong-guro.',
     pos:   'right',
   },
   {
     target: 'tut-target-output',
     icon:  'i-copy',
     title: 'Suriin at kopyahin',
-    body:  'Laging suriin ang output bago ipadala. I-click ang "Kopyahin" at i-paste sa iyong messaging app o email. Ikaw pa rin ang nagpapadala — hindi awtomatiko.',
+    body:  'Laging suriin ang output bago ipadala. I-click ang "Kopyahin" at i-paste sa iyong messaging app o email. Ikaw pa rin ang nagpapadala, hindi awtomatiko.',
     pos:   'left',
   },
 ];
@@ -159,11 +159,11 @@ function nextStep() {
 
 function endTutorial() {
   getTutorialWrap().classList.add('hidden');
-  localStorage.setItem('ugnai_seen', '1');
+  localStorage.setItem('ugnai_tutorial_seen', '1');
 }
 
 function initTutorial() {
-  if (localStorage.getItem('ugnai_seen')) {
+  if (localStorage.getItem('ugnai_tutorial_seen')) {
     getTutorialWrap().classList.add('hidden');
     return;
   }
