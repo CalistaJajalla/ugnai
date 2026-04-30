@@ -1,5 +1,5 @@
 // ============================
-// UGNAI — app.js
+// UGNAI - app.js
 // Calls /api/generate (server-side proxy).
 // ============================
 
@@ -222,36 +222,36 @@ Output the reformatted draft only. No explanation, no intro sentence, no meta-co
 }
 
 // API CALL via proxy
-// Calls /api/generate — a Vercel serverless function that holds the API key.
-// Users never see or touch the key.
-async function callAPI(prompt, keyHint = 0, attempt = 0) {
-  const delay = ms => new Promise(r => setTimeout(r, ms));
-  try {
-    const res = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, keyHint }),
-    });
-    // If rate limited or server error, retry up to 3 times with backoff
-    if (res.status === 429 || res.status >= 500) {
-      if (attempt < 3) {
-        await delay(1500 * (attempt + 1)); // 1.5s, 3s, 4.5s
-        return callAPI(prompt, keyHint + 1, attempt + 1);
+// Calls /api/generate with auto-retry on rate limit or server error.
+async function callAPI(prompt, keyHint = 0) {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const MAX_ATTEMPTS = 4;
+  const WAIT = [2000, 4000, 6000];
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    if (attempt > 0) await sleep(WAIT[attempt - 1]);
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, keyHint: keyHint + attempt }),
+      });
+
+      if (res.status === 429) continue;
+
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || 'Server error');
       }
+
+      const d = await res.json();
+      return stripMarkdown(d.text);
+
+    } catch (err) {
+      if (attempt === MAX_ATTEMPTS - 1) throw err;
     }
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({}));
-      throw new Error(e.error || `Server error ${res.status}`);
-    }
-    const d = await res.json();
-    return stripMarkdown(d.text);
-  } catch (err) {
-    if (attempt < 3) {
-      await delay(1500 * (attempt + 1));
-      return callAPI(prompt, keyHint + 1, attempt + 1);
-    }
-    throw err;
   }
+  throw new Error('Busy ngayon. Subukan ulit mamaya.');
 }
 
 function stripMarkdown(text) {
@@ -312,7 +312,7 @@ async function genBatch() {
   auds.forEach(a => { document.getElementById(`b-${a}`).textContent = 'Generating...'; });
 
   try {
-    // Sequential with 1.2s delay between calls — avoids rate limits on free tier keys
+    // Sequential with 1.2s delay between calls - avoids rate limits on free tier keys
     const delay = ms => new Promise(r => setTimeout(r, ms));
     for (let i = 0; i < auds.length; i++) {
       const a = auds[i];
@@ -325,7 +325,7 @@ async function genBatch() {
         S.batch[a] = `Hindi nagawa: ${e.message}`;
         document.getElementById(`b-${a}`).textContent = `Hindi nagawa: ${e.message}`;
       }
-      if (i < auds.length - 1) await delay(2000);
+      if (i < auds.length - 1) await delay(3000);
     }
     saveHist({ input, output: '[Batch] Para sa lahat generated', batchOutputs: { ...S.batch }, audience: 'batch', format: 'batch', language: S.language, tone: S.tone });
   } catch (e) {
