@@ -210,7 +210,7 @@ STRICT RULES:
 
 Audience: ${audMap[aud] || aud}
 Format: ${fmtMap[fmt] || fmt}
-Output language: ${lang}${lang === 'Taglish' ? ' — mix Filipino and English naturally, the way Filipino teachers actually text and talk, not forced translations' : ''}
+Output language: ${lang}${lang === 'Taglish' ? ' (mix Filipino and English naturally, the way Filipino teachers actually text and talk, not forced translations)' : ''}
 Tone: ${toneMap[tone] || tone}
 
 Teacher's notes:
@@ -372,12 +372,12 @@ document.getElementById('pdf-btn')?.addEventListener('click', () => {
   let y = m;
 
   doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(26,23,20);
-  doc.text('UGNai — Reformatted Draft', m, y); y += 8;
+  doc.text('UGNai: Reformatted Draft', m, y); y += 8;
 
   doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(122,114,105);
   doc.text(`Audience: ${S.audience}  |  Format: ${S.format}  |  Language: ${S.language}  |  Tone: ${S.tone}`, m, y); y += 5;
   doc.text(`Generated: ${new Date().toLocaleString()}`, m, y); y += 5;
-  doc.setTextColor(192,57,43); doc.text('DRAFT — Review before sending', m, y); y += 9;
+  doc.setTextColor(192,57,43); doc.text('DRAFT: Review before sending', m, y); y += 9;
 
   doc.setDrawColor(210,200,190); doc.line(m, y, m + pw, y); y += 8;
 
