@@ -1,53 +1,74 @@
-# UGNai — Unified Guro Narrative AI
+# UGNai: Unified Guro Narrative AI
 
-AI communication tool for Filipino public school teachers.
+An AI communication tool for Filipino public school teachers.
 
-## Setup
+Write your notes once. UGNai handles the rest.
 
-### 1. Clone & deploy to Vercel
+Try it: **[ugnai-d5eb.vercel.app](https://ugnai-d5eb.vercel.app)**
 
-```bash
-git clone https://github.com/YOUR_USERNAME/ugnai.git
-cd ugnai
-vercel
+---
+
+## What it does
+
+Filipino public school teachers write the same weekly update four times. Once for parents, once for students, once for DepEd, once for the principal. Different language, different tone, different format every time.
+
+UGNai takes your notes and reformats them for each audience in seconds. You review the draft. You send it yourself. You are always in control.
+
+---
+
+## How to use it
+
+1. Type or paste your notes into the left box. Write however feels natural, any language is fine.
+2. Pick your audience: Parents, Students, DepEd/Admin, or Principal.
+3. Choose a format and language.
+4. Click Generate Draft. Your reformatted draft appears on the right.
+5. Review it, copy it, paste it into your own messaging app or email.
+
+To generate all four audience versions at once, click Para sa Lahat.
+
+---
+
+## Good to know
+
+Every output is a draft. UGNai never sends anything automatically. You copy it and send it yourself. The teacher is always the final approver.
+
+---
+
+## Install on your phone
+
+No app store needed. Free.
+
+**Android:**
+1. Open ugnai-d5eb.vercel.app in Chrome
+2. Tap the three-dot menu
+3. Tap Add to Home Screen
+
+**iPhone:**
+1. Open ugnai-d5eb.vercel.app in Safari
+2. Tap the Share button
+3. Tap Add to Home Screen
+
+---
+
+## Sample notes to try
+
+Copy any of these and paste into the input box:
+
+**No classes:**
+```
+Walang pasok bukas, Biyernes, dahil may in-service training ang mga guro. Babalik tayo Lunes.
 ```
 
-### 2. Add your API key to Vercel (one-time, done in the dashboard)
-
-1. Go to your project on vercel.com
-2. Settings → Environment Variables
-3. Add: `ANTHROPIC_API_KEY` = your key from console.anthropic.com
-4. Redeploy once
-
-Users never see or touch this key. It lives only on Vercel's servers.
-
-### 3. Install on phone (no Play Store needed)
-
-Android: Open site in Chrome → three-dot menu → "Add to Home Screen"
-iPhone: Open in Safari → Share → "Add to Home Screen"
-
-### 4. Add app icons
-
-Create two PNG files and put them in the `icons/` folder:
-- `icons/icon-192.png` (192×192 px)
-- `icons/icon-512.png` (512×512 px)
-
-## Project structure
-
+**Quiz reminder:**
 ```
-ugnai/
-├── index.html        — App UI
-├── style.css         — Styles  
-├── app.js            — App logic
-├── api/
-│   └── generate.js   — Vercel serverless function (holds API key securely)
-├── sw.js             — Service worker (PWA)
-├── manifest.json     — PWA manifest
-├── icons/            — App icons (add your PNGs here)
-└── vercel.json       — Vercel config
+May quiz tayo sa Math sa Huwebes. Saklaw ang addition at subtraction ng fractions. Chapters 5 at 6. 20 items.
 ```
 
-## Play Store
+**Activity with materials:**
+```
+May Science experiment tayo sa Miyerkules. Magdala ng: 1 itlog, 1 baso ng suka, 1 kutsara ng asin. Sa loob ng klase. Magsuot ng lumang damit.
+```
 
-UGNai is a PWA — teachers install it from the browser for free.
-If you later want Google Play, one-time fee is $25 USD.
+---
+
+*UGNai — Women in AI Accelerator 2026*
