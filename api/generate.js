@@ -1,17 +1,15 @@
 // api/generate.js
-// UGNai secure API proxy
-// Handles: input validation, injection detection, key rotation, locked system prompt
+// UGNai API proxy using Groq
+// Model: llama-3.3-70b
 
-// KEY ROTATION
+// KEY SETUP
 
 function getKeys() {
   const keys = [];
   for (let i = 1; i <= 5; i++) {
-    const k = process.env[`ANTHROPIC_KEY_${i}`];
-    if (k && k.startsWith('sk-ant-')) keys.push({ key: k, index: i });
-  }
-  if (keys.length === 0 && process.env.ANTHROPIC_API_KEY) {
-    keys.push({ key: process.env.ANTHROPIC_API_KEY, index: 0 });
+    const suffix = i === 1 ? '' : `_${i}`;
+    const k = process.env[`GROQ_API_KEY${suffix}`];
+    if (k) keys.push({ key: k, index: i });
   }
   return keys;
 }
@@ -37,7 +35,7 @@ const INJECTION_PATTERNS = [
   /jailbreak/gi,
   /\bDAN\b/g,
   /process\.env/gi,
-  /ANTHROPIC_KEY/gi,
+  /GROQ_API_KEY/gi,
   /<\s*script/gi,
   /\beval\s*\(/gi,
 ];
@@ -76,7 +74,7 @@ Magandang araw po! Mayroon pong Science experiment ang klase next Monday. Pakius
 FOR STUDENTS:
 Input: walang pasok friday, teacher seminar
 Output:
-Walang pasok tayo this Friday dahil may seminar ang mga guro. Bukas na tayo ulit sa Monday.
+Walang pasok tayo this Friday dahil may seminar ang mga guro. Babalik na tayo sa Monday.
 
 Input: science experiment monday, kailangan magdala ng empty plastic bottle vinegar baking soda, mag-wear lumang damit, sa labas gagawin
 Output:
@@ -90,42 +88,41 @@ Nais ipaalam na ang mga klase ay suspendido sa Biyernes, [petsa], dahil sa nakat
 FOR PRINCIPAL:
 Input: walang pasok friday, teacher seminar
 Output:
-Magandang araw. Nais ko pong ipaalam na walang klase sa aming baitang ngayong Biyernes dahil sa seminar ng mga guro. Babalik na po kami sa regular na iskedyul sa Lunes. Salamat po.
+Magandang araw po. Nais ko pong ipaalam na walang klase sa aming baitang ngayong Biyernes dahil sa seminar ng mga guro. Babalik na po kami sa regular na iskedyul sa Lunes. Salamat po.
 
 RULES FOR PARENTS AND STUDENTS:
 Never start with "Mahal naming mga magulang" or "Mga estudyante" or similar formal openers.
-Use "Magandang araw po!" or just go straight to the message for parents.
+Use "Magandang araw po!" for parents, or go straight to the message.
 For students, go straight to the information. No greeting needed.
 Never write "ha" at the end of sentences.
-Never use casual filler words like "kasi lang", "ano ba", "syempre".
-End parent messages with "Salamat po!" only. Nothing longer.
+End parent messages with "Salamat po!" only.
 End student messages with nothing or one short sentence.
 
 RULES FOR ENGLISH WORDS:
 Science, Math, experiment, quiz, seminar, schedule, report, project, reminder stay in English.
 Everything else stays in Filipino: walang pasok, lumang damit, sa labas, mayroon, kailangan.
-Never add English words that are not in the teacher's original notes.
-Never translate Filipino words into English that have a perfectly natural Filipino version.
+Never add English words not in the teacher's original notes.
 
 CONTENT RULES:
-Never add facts, examples, or details not in the teacher's notes.
+Never add facts or details not in the teacher's notes.
 Missing information gets a [punan] placeholder.
 Output the reformatted text only. Nothing before or after it.`;
 
-// CLAUDE API CALL
-async function callClaude(apiKey, userPrompt) {
-  return fetch('https://api.anthropic.com/v1/messages', {
+// GROQ API CALL
+async function callGroq(apiKey, userPrompt) {
+  return fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'llama-3.3-70b-versatile',
       max_tokens: 800,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt }],
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt },
+      ],
     }),
   });
 }
@@ -155,14 +152,14 @@ export default async function handler(req, res) {
 
   const allKeys = getKeys();
   if (allKeys.length === 0) {
-    return res.status(500).json({ error: 'Hindi pa naka-configure ang serbisyo.' });
+    return res.status(500).json({ error: 'Hindi pa naka-configure ang serbisyo. Makipag-ugnayan sa admin.' });
   }
 
   const ordered = getOrdered(allKeys, keyHint);
 
   for (const { key } of ordered) {
     try {
-      const response = await callClaude(key, safePrompt);
+      const response = await callGroq(key, safePrompt);
 
       if (response.status === 429) {
         continue;
@@ -170,15 +167,15 @@ export default async function handler(req, res) {
 
       if (!response.ok) {
         const errBody = await response.json().catch(() => ({}));
-        console.error('Anthropic error:', response.status, errBody);
-        return res.status(502).json({ error: 'May problema sa serbisyo. Subukan ulit.' });
+        console.error('Groq error:', response.status, errBody);
+        continue;
       }
 
       const data = await response.json();
-      const text = data.content?.[0]?.text;
+      const text = data.choices?.[0]?.message?.content;
 
       if (!text) {
-        return res.status(502).json({ error: 'Walang laman ang sagot. Subukan ulit.' });
+        continue;
       }
 
       return res.status(200).json({ text });
@@ -189,6 +186,6 @@ export default async function handler(req, res) {
   }
 
   return res.status(429).json({
-    error: 'Busy ngayon ang serbisyo. Sandali lang at subukan ulit.'
+    error: 'Sandali lang. Subukan ulit.'
   });
 }
