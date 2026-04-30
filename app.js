@@ -1,7 +1,6 @@
 // ============================
 // UGNAI - app.js
 // Calls /api/generate (server-side proxy).
-// Users never see or need an API key.
 // ============================
 
 const S = {
