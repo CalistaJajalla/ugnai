@@ -222,14 +222,12 @@ Output the reformatted draft only. No explanation, no intro sentence, no meta-co
 }
 
 // API CALL via proxy
-// Calls /api/generate with auto-retry on rate limit or server error.
 async function callAPI(prompt, keyHint = 0) {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  const MAX_ATTEMPTS = 4;
-  const WAIT = [2000, 4000, 6000];
+  const WAITS = [0, 2500, 4000, 6000];
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    if (attempt > 0) await sleep(WAIT[attempt - 1]);
+  for (let attempt = 0; attempt < WAITS.length; attempt++) {
+    if (WAITS[attempt] > 0) await sleep(WAITS[attempt]);
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
@@ -237,21 +235,24 @@ async function callAPI(prompt, keyHint = 0) {
         body: JSON.stringify({ prompt, keyHint: keyHint + attempt }),
       });
 
-      if (res.status === 429) continue;
+      // Always retry on 429 or 5xx
+      if (res.status === 429 || res.status >= 500) continue;
 
       if (!res.ok) {
+        // 4xx errors won't get better with retry
         const e = await res.json().catch(() => ({}));
-        throw new Error(e.error || 'Server error');
+        throw new Error(e.error || 'Error');
       }
 
       const d = await res.json();
       return stripMarkdown(d.text);
 
     } catch (err) {
-      if (attempt === MAX_ATTEMPTS - 1) throw err;
+      // Network error -- retry unless it's the last attempt
+      if (attempt === WAITS.length - 1) throw err;
     }
   }
-  throw new Error('Busy ngayon. Subukan ulit mamaya.');
+  throw new Error('Subukan ulit mamaya.');
 }
 
 function stripMarkdown(text) {
@@ -286,7 +287,7 @@ async function genSingle() {
     document.getElementById('out-text').textContent = result;
     saveHist({ input, output: result, audience: S.audience, format: S.format, language: S.language, tone: S.tone });
   } catch (err) {
-    document.getElementById('out-text').textContent = `May problema. Subukan ulit mamaya.`;
+    document.getElementById('out-text').textContent = 'May problema. Subukan ulit mamaya.';
   } finally {
     btn.disabled = false; lbl.classList.remove('hidden'); spn.classList.add('hidden');
   }
@@ -309,7 +310,7 @@ async function genBatch() {
 
   const auds = ['parents','students','deped','principal'];
   const fmts = { parents:'letter', students:'student-summary', deped:'deped-report', principal:'weekly' };
-  auds.forEach(a => { document.getElementById(`b-${a}`).textContent = 'Generating...'; });
+  auds.forEach(a => { document.getElementById(`b-${a}`).textContent = 'Ginagawa...'; });
 
   try {
     // Sequential with 1.2s delay between calls - avoids rate limits on free tier keys
