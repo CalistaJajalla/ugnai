@@ -1,6 +1,7 @@
 // ============================
 // UGNAI - app.js
 // Calls /api/generate (server-side proxy).
+// Users never see or need an API key.
 // ============================
 
 const S = {
@@ -180,7 +181,7 @@ document.getElementById('tmpl')?.addEventListener('change', e => {
 function buildPrompt(input, aud, fmt, lang, tone) {
   const audMap = {
     parents:   'parents of Filipino public school students. Tone: like a teacher texting a Viber parent group — warm, short, direct, conversational Taglish. Example opener: "Hi mga parents! Gusto lang i-remind..."',
-    students:  'Filipino public school students. Tone: like a teacher talking to their class — chill, clear, encouraging. Example opener: "Hoy class, may quiz tayo this Friday..."',
+    students:  'Filipino public school students. Tone: direct and clear, like a teacher giving a reminder to their class. Example opener: "Reminder lang na may quiz tayo this Friday..."',
     deped:     'DepEd officials or school administrators. Tone: professional but human, no bureaucratic filler. Clear subject line, short body, direct.',
     principal: 'the school principal. Tone: brief and respectful, like a hallway update turned into a short memo. Two paragraphs max.',
   };
