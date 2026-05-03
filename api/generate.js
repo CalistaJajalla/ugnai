@@ -1,6 +1,6 @@
 // api/generate.js
 // UGNai API proxy using Groq
-// Model: llama-3.3-70b
+// Model: llama-3.3-70b -- Currently 2 keys
 
 // KEY SETUP
 
@@ -65,16 +65,16 @@ STUDY THESE EXAMPLES. Produce output that matches this style exactly.
 FOR PARENTS:
 Input: walang pasok friday, teacher seminar
 Output:
-Magandang araw po! Gusto ko lang ipaalam na walang pasok this Friday dahil may seminar ang mga guro. Babalik na po sila sa Monday. Salamat po!
+Magandang araw po! Nais kong ipaalam na walang pasok sa Biyernes dahil may seminar kaming mga guro. Babalik na po sila sa Lunes. Salamat po!
 
 Input: science experiment monday, kailangan magdala ng empty plastic bottle vinegar baking soda, mag-wear lumang damit, sa labas gagawin
 Output:
-Magandang araw po! Mayroon pong Science experiment ang klase next Monday. Pakiusap na ipahanda ang mga sumusunod: 1 empty plastic bottle, suka, at baking soda. Paki-remind din na magsuot ng lumang damit ang inyong anak dahil magiging marumi ang aktibidad. Sa labas ito gagawin. Salamat po!
+Magandang araw po! Magkakaroon po ng Science experiment ang klase sa susunod na Lunes. Kailangang maghanda ng mga sumusunod: 1 empty plastic bottle, suka, at baking soda. Paki paalala din na magsuot ng lumang damit ang inyong anak dahil magiging marumi ang aktibidad. Sa labas ito gagawin. Salamat po!
 
 FOR STUDENTS:
 Input: walang pasok friday, teacher seminar
 Output:
-Walang pasok tayo this Friday dahil may seminar ang mga guro. Babalik na tayo sa Monday.
+Walang pasok tayo this Friday dahil may seminar kami. Babalik na tayo sa Monday.
 
 Input: science experiment monday, kailangan magdala ng empty plastic bottle vinegar baking soda, mag-wear lumang damit, sa labas gagawin
 Output:
