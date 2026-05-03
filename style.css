@@ -402,7 +402,7 @@ body {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  line-clamp: 2; }
+  }
 
 /* ── TUTORIAL OVERLAY ────────────────────── */
 .tut-wrap { position: fixed; inset: 0; z-index: 500; pointer-events: none; }
