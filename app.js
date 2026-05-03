@@ -481,8 +481,10 @@ function initVoice() {
 
   if (!SpeechRecognition) {
     if (btn) {
-      btn.disabled = true;
-      btn.title = 'Hindi sinusuportahan ng browser na ito ang voice input. Gamitin ang Chrome.';
+      btn.title = 'Ang voice input ay hindi available sa iyong browser. Subukan sa Chrome, Edge, o Safari.';
+      btn.addEventListener('click', () => {
+        alert('Hindi available ang voice input sa iyong browser.\n\nSubukan sa Chrome, Edge, o Safari para gumana ito.');
+      });
     }
     return;
   }
