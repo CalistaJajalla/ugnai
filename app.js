@@ -224,7 +224,7 @@ Output the reformatted draft only. No explanation, no intro sentence, no meta-co
 // API CALL via proxy
 async function callAPI(prompt, keyHint = 0) {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  const WAITS = [0, 2500, 4000, 6000];
+  const WAITS = [0, 1500, 2500, 4000];
 
   for (let attempt = 0; attempt < WAITS.length; attempt++) {
     if (WAITS[attempt] > 0) await sleep(WAITS[attempt]);
@@ -326,7 +326,7 @@ async function genBatch() {
         S.batch[a] = `Hindi nagawa: ${e.message}`;
         document.getElementById(`b-${a}`).textContent = `Hindi nagawa: ${e.message}`;
       }
-      if (i < auds.length - 1) await delay(3000);
+      if (i < auds.length - 1) await delay(1500);
     }
     saveHist({ input, output: '[Batch] Para sa lahat generated', batchOutputs: { ...S.batch }, audience: 'batch', format: 'batch', language: S.language, tone: S.tone });
   } catch (e) {
@@ -463,8 +463,184 @@ document.getElementById('hist-clear')?.addEventListener('click', () => {
   renderHist();
 });
 
+// VOICE INPUT
+// Uses Web Speech API for real-time transcription
+// Supports Filipino (fil-PH) and English
+
+let recognition = null;
+let isRecording = false;
+
+function initVoice() {
+  const btn = document.getElementById('voice-btn');
+  const label = document.getElementById('voice-label');
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    if (btn) {
+      btn.disabled = true;
+      btn.title = 'Hindi sinusuportahan ng browser na ito ang voice input. Gamitin ang Chrome.';
+    }
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = S.language === 'English' ? 'en-PH' : 'fil-PH';
+
+  let finalTranscript = '';
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += t + ' ';
+      } else {
+        interim = t;
+      }
+    }
+    const notesEl = document.getElementById('notes');
+    notesEl.value = finalTranscript + interim;
+    notesEl.dispatchEvent(new Event('input'));
+  };
+
+  recognition.onerror = (event) => {
+    console.error('Speech error:', event.error);
+    stopRecording();
+    if (event.error === 'not-allowed') {
+      alert('Hindi binigyan ng permiso ang mikropono. I-allow ang microphone sa browser settings.');
+    }
+  };
+
+  recognition.onend = () => {
+    if (isRecording) stopRecording();
+  };
+
+  btn?.addEventListener('click', () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  });
+}
+
+function startRecording() {
+  if (!recognition) return;
+  const btn = document.getElementById('voice-btn');
+  const label = document.getElementById('voice-label');
+  recognition.lang = S.language === 'English' ? 'en-PH' : 'fil-PH';
+  recognition.start();
+  isRecording = true;
+  btn?.classList.add('recording');
+  if (label) label.textContent = 'Itigil';
+}
+
+function stopRecording() {
+  recognition?.stop();
+  isRecording = false;
+  const btn = document.getElementById('voice-btn');
+  const label = document.getElementById('voice-label');
+  btn?.classList.remove('recording');
+  if (label) label.textContent = 'Magsalita';
+}
+
+// CAMERA OCR
+// Sends photo to Groq Vision, shows extracted text for review before using
+
+async function handleCameraCapture(file) {
+  if (!file) return;
+
+  const label = document.getElementById('camera-label');
+  const btn = document.getElementById('camera-btn');
+
+  btn.disabled = true;
+  if (label) label.textContent = 'Binabasa...';
+
+  try {
+    const base64 = await fileToBase64(file);
+    const mimeType = file.type || 'image/jpeg';
+
+    const res = await fetch('/api/vision', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64, mimeType }),
+    });
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || 'Hindi nabasa ang larawan.');
+    }
+
+    const data = await res.json();
+    showOcrReview(data.text);
+
+  } catch (err) {
+    alert('Hindi nabasa ang larawan: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    if (label) label.textContent = 'Kumuha ng Litrato';
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function showOcrReview(text) {
+  const review = document.getElementById('ocr-review');
+  const ocrText = document.getElementById('ocr-text');
+  if (!review || !ocrText) return;
+  ocrText.value = text;
+  review.classList.remove('hidden');
+  ocrText.focus();
+}
+
+function hideOcrReview() {
+  document.getElementById('ocr-review')?.classList.add('hidden');
+}
+
+function initCamera() {
+  const cameraBtn = document.getElementById('camera-btn');
+  const cameraInput = document.getElementById('camera-input');
+  const ocrUse = document.getElementById('ocr-use');
+  const ocrCancel = document.getElementById('ocr-cancel');
+  const ocrClose = document.getElementById('ocr-close');
+
+  cameraBtn?.addEventListener('click', () => {
+    cameraInput?.click();
+  });
+
+  cameraInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleCameraCapture(file);
+    cameraInput.value = '';
+  });
+
+  ocrUse?.addEventListener('click', () => {
+    const text = document.getElementById('ocr-text')?.value?.trim();
+    if (!text) return;
+    const notesEl = document.getElementById('notes');
+    notesEl.value = text;
+    notesEl.dispatchEvent(new Event('input'));
+    hideOcrReview();
+  });
+
+  ocrCancel?.addEventListener('click', hideOcrReview);
+  ocrClose?.addEventListener('click', hideOcrReview);
+}
+
 // INIT
 (function init() {
   initOnboard();
   renderHist();
+  initVoice();
+  initCamera();
 })();
