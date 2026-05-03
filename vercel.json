@@ -1,8 +1,16 @@
 {
-  "outputDirectory": ".",
   "functions": {
-    "api/generate.js": {
-      "maxDuration": 30
+    "api/generate.js": { "maxDuration": 30 },
+    "api/vision.js":   { "maxDuration": 30 }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma",        "value": "no-cache" },
+        { "key": "Expires",       "value": "0" }
+      ]
     }
-  }
+  ]
 }
