@@ -37,11 +37,14 @@
   <symbol id="i-chevron"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"   stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
   <symbol id="i-trash"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></symbol>
   <symbol id="i-pen"      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+  <symbol id="i-mic"      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+  <symbol id="i-camera"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+  <symbol id="i-mic-off"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
   <symbol id="i-arrow-r"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"   stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
 </svg>
 
 <!-- ═══════════════════════════════════════════
-     TUTORIAL OVERLAY — shown first time only
+     TUTORIAL OVERLAY: shown first time only
      Step-by-step walkthrough of the actual UI
      ═══════════════════════════════════════════ -->
 <div id="tutorial" class="tut-wrap">
@@ -167,6 +170,35 @@
         <textarea id="notes" class="textarea"
           placeholder="Halimbawa: May quiz kami sa AP next week tungkol sa Pilipinas noong Kastila. Kailangan ng notebook at ballpen. Miyerkules, Abril 30."
           rows="7"></textarea>
+
+        <!-- VOICE AND CAMERA BUTTONS -->
+        <div class="input-tools">
+          <button class="tool-btn" id="voice-btn" title="I-record ang iyong tala">
+            <svg width="15" height="15"><use href="#i-mic"/></svg>
+            <span id="voice-label">Magsalita</span>
+          </button>
+          <button class="tool-btn" id="camera-btn" title="Kunan ng litrato ang iyong tala">
+            <svg width="15" height="15"><use href="#i-camera"/></svg>
+            <span id="camera-label">Kumuha ng Litrato</span>
+          </button>
+          <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" />
+        </div>
+
+        <!-- OCR REVIEW (shown after camera capture) -->
+        <div id="ocr-review" class="ocr-review hidden">
+          <div class="ocr-header">
+            <span class="ocr-title">Nascan na text. Suriin bago gamitin:</span>
+            <button class="ocr-close" id="ocr-close">
+              <svg width="14" height="14"><use href="#i-x"/></svg>
+            </button>
+          </div>
+          <textarea id="ocr-text" class="ocr-textarea" rows="4"></textarea>
+          <div class="ocr-actions">
+            <button class="btn-primary" id="ocr-use">Gamitin ito</button>
+            <button class="btn-outline" id="ocr-cancel">Kanselahin</button>
+          </div>
+        </div>
+
         <div id="warn" class="warn"></div>
       </section>
 
