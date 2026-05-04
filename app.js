@@ -377,6 +377,26 @@ function initLangPicker() {
   if (savedLang) {
     siteLang = savedLang;
   }
+  
+  // Update the language switch button label
+  updateLangSwitchLabel();
+  
+  // Handle language switch button click
+  const langSwitch = document.getElementById('lang-switch');
+  langSwitch?.addEventListener('click', () => {
+    // Toggle language
+    siteLang = siteLang === 'english' ? 'tagalog' : 'english';
+    localStorage.setItem('ugnai_site_lang', siteLang);
+    updateLangSwitchLabel();
+    applyTranslations();
+  });
+}
+
+function updateLangSwitchLabel() {
+  const label = document.getElementById('lang-switch-label');
+  if (label) {
+    label.textContent = siteLang === 'english' ? 'EN' : 'TL';
+  }
 }
 
 // ONBOARDING
