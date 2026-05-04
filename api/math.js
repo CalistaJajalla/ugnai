@@ -16,6 +16,29 @@ function pickKey(keys) {
   return keys[Math.floor(Math.random() * keys.length)];
 }
 
+// Random context picker for word problems - adds variety
+const WORD_PROBLEM_CONTEXTS = [
+  { setting: 'sari-sari store', names: ['Aling Rosa', 'Mang Pedro'], items: ['candy, snacks, drinks'] },
+  { setting: 'jeepney ride', names: ['Kuya Ben', 'Ate Jenny'], items: ['fare, distance, passengers'] },
+  { setting: 'palengke (wet market)', names: ['Nanay Linda', 'Tatay Jun'], items: ['fish, vegetables, meat'] },
+  { setting: 'school canteen', names: ['Maria', 'Juan'], items: ['merienda, lunch, drinks'] },
+  { setting: 'barangay fiesta', names: ['Kapitan Romy', 'Aling Nena'], items: ['food, decorations, chairs'] },
+  { setting: 'basketball court', names: ['Carlo', 'Miguel'], items: ['scores, players, games'] },
+  { setting: 'rice farm', names: ['Mang Andres', 'Kuya Tonyo'], items: ['harvest, sacks, land area'] },
+  { setting: 'fishing village', names: ['Tatay Peping', 'Mang Dario'], items: ['fish catch, boats, nets'] },
+  { setting: 'tricycle terminal', names: ['Kuya Rodel', 'Mang Bert'], items: ['trips, passengers, earnings'] },
+  { setting: 'bakery (panaderia)', names: ['Aling Cora', 'Tita Mely'], items: ['pandesal, cakes, bread'] },
+  { setting: 'carenderia', names: ['Nanay Beth', 'Aling Mila'], items: ['ulam, rice, customers'] },
+  { setting: 'construction site', names: ['Foreman Danny', 'Mang Celso'], items: ['cement, workers, materials'] },
+  { setting: 'birthday party', names: ['Tita Susan', 'Ninang Celia'], items: ['guests, balloons, food packs'] },
+  { setting: 'computer shop', names: ['Kuya Jay', 'Boss Eric'], items: ['hours, computers, payments'] },
+  { setting: 'vegetable garden', names: ['Lola Carmen', 'Tita Edna'], items: ['plants, harvests, plots'] },
+];
+
+function getRandomContext() {
+  return WORD_PROBLEM_CONTEXTS[Math.floor(Math.random() * WORD_PROBLEM_CONTEXTS.length)];
+}
+
 // Detect complexity level of the equation to adjust prompting
 function detectComplexity(latex) {
   const complex = [
@@ -108,28 +131,47 @@ async function generateMathContent(apiKey, latex, audience, language, mode) {
   let taskPrompt;
 
   if (mode === 'word_problem') {
+    // Get a random context to ensure variety
+    const ctx = getRandomContext();
+    const contextInstruction = `REQUIRED SETTING: ${ctx.setting}
+REQUIRED CHARACTERS: Use names like ${ctx.names.join(' or ')}
+ITEMS/CONTEXT: The problem should involve ${ctx.items}`;
+
     if (hasPolynomial) {
       taskPrompt = `Create ONE realistic word problem for Filipino students that naturally leads to this polynomial equation.
+
+${contextInstruction}
+
 Rules:
-- Use a real Philippine setting (sari-sari store, jeepney, palengke, school canteen, barangay, etc.)
-- Use Filipino names (e.g. Juan, Maria, Aling Nena, Kuya Ben)
+- The story MUST be set in the specified setting above — do not use a different setting
 - The story must logically and naturally produce this exact equation when solved
 - State what the student needs to find (the unknown variable)
 - Do NOT show the equation itself in the problem — let it come from the situation
 - The numbers must be realistic and make sense in the story
-- Keep it to 3-5 sentences maximum`;
+- Keep it to 3-5 sentences maximum
+- Be creative with the specific scenario within the given setting`;
     } else if (isComplex) {
       taskPrompt = `Create ONE realistic word problem for Filipino students that uses this equation.
+
+${contextInstruction}
+
 Rules:
-- Use a real Philippine setting and Filipino names
+- The story MUST be set in the specified setting above — do not use a different setting
 - The problem must make practical sense (e.g. budgeting, distance, time, splitting costs)
 - State clearly what the student needs to solve for
 - Do NOT write the equation directly — let it emerge from the problem naturally
-- Keep it to 3-5 sentences`;
+- Keep it to 3-5 sentences
+- Be creative with the specific scenario within the given setting`;
     } else {
-      taskPrompt = `Create one realistic word problem in the Philippine context that uses this equation.
-Use local names, places, and everyday Filipino situations (sari-sari store, jeepney fare, school canteen, etc.).
-State what needs to be solved. Keep it to 3-4 sentences.`;
+      taskPrompt = `Create one realistic word problem that uses this equation.
+
+${contextInstruction}
+
+Rules:
+- The story MUST use the specified setting and characters above
+- State what needs to be solved
+- Keep it to 3-4 sentences
+- Be creative and make the scenario interesting`;
     }
   } else {
     // Explanation mode
@@ -151,6 +193,9 @@ Write in plain text only. No markdown, no bullet symbols, no asterisks.`;
     }
   }
 
+  // Use higher temperature for word problems to get more variety
+  const temperature = mode === 'word_problem' ? 0.9 : 0.5;
+
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -160,12 +205,14 @@ Write in plain text only. No markdown, no bullet symbols, no asterisks.`;
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
       max_tokens: 800,
+      temperature,
       messages: [
         {
           role: 'system',
           content: `You are a skilled Filipino math teacher helping explain math clearly to different audiences.
 You always write in plain, natural ${language} — no markdown formatting, no asterisks, no bullet symbols, no LaTeX in your output.
-Your explanations are accurate, logical, and easy to follow.`,
+Your explanations are accurate, logical, and easy to follow.
+When creating word problems, you are creative and use the EXACT setting and characters specified — never substitute them.`,
         },
         {
           role: 'user',
