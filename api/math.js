@@ -216,11 +216,12 @@ export default async function handler(req, res) {
     }
 
     // Step 2: Generate explanation or word problem
+    // Math mode always uses English for clarity
     const content = await generateMathContent(
       pickKey(keys),
       latex,
       audience || 'students',
-      language || 'Filipino',
+      'English',
       mode || 'explanation'
     );
 
