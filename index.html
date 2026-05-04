@@ -262,6 +262,12 @@
             </button>
             <input type="file" id="math-camera-input" accept="image/*" capture="environment" style="display:none"/>
           </div>
+          
+          <!-- Equation picker (shown when multiple equations detected) -->
+          <div id="math-eq-picker" class="math-eq-picker hidden">
+            <p class="math-eq-picker-title">Multiple equations detected. Select one:</p>
+            <div id="math-eq-list" class="math-eq-list"></div>
+          </div>
 
           <div class="math-mode-row">
             <button class="math-mode-btn on" data-mode="explanation">Explanation</button>

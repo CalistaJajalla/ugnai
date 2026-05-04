@@ -105,6 +105,8 @@ const T = {
     'continue': 'Magpatuloy',
     // Math mode reminder (English)
     'math_reminder': 'Note: Math Mode generates content in English for clarity.',
+    // Equation picker
+    'multiple_equations': 'Maraming equation ang nakita. Pumili ng isa:',
   },
   english: {
     // Header
@@ -192,6 +194,8 @@ const T = {
     'continue': 'Continue',
     // Math mode reminder (English)
     'math_reminder': 'Note: Math Mode generates content in English for clarity.',
+    // Equation picker
+    'multiple_equations': 'Multiple equations detected. Select one:',
   }
 };
 
@@ -251,6 +255,10 @@ function applyTranslations() {
   // Math reminder
   const mathReminder = document.getElementById('math-reminder');
   if (mathReminder) mathReminder.textContent = t('math_reminder');
+  
+  // Equation picker
+  const eqPickerTitle = document.querySelector('.math-eq-picker-title');
+  if (eqPickerTitle) eqPickerTitle.textContent = t('multiple_equations');
   
   // OCR
   const ocrTitle = document.querySelector('.ocr-title');
@@ -1232,13 +1240,19 @@ function initMathMode() {
   });
 }
 
-async function runMathGenerate(imageFile, textInput) {
+// Store detected equations for picker
+let detectedEquations = [];
+let selectedEquationIndex = 0;
+
+async function runMathGenerate(imageFile, textInput, skipExtract = false) {
   const genBtn = document.getElementById('math-generate-btn');
   const lbl = document.getElementById('math-gen-lbl');
   const spn = document.getElementById('math-gen-spin');
   const result = document.getElementById('math-result');
   const eqBox = document.getElementById('math-eq-box');
   const contentBox = document.getElementById('math-content-box');
+  const eqPicker = document.getElementById('math-eq-picker');
+  const eqList = document.getElementById('math-eq-list');
 
   genBtn.disabled = true;
   lbl.classList.add('hidden');
@@ -1246,17 +1260,92 @@ async function runMathGenerate(imageFile, textInput) {
   result.classList.add('hidden');
 
   try {
+    // If image provided and not skipping extraction, first extract all equations
+    if (imageFile && !skipExtract) {
+      const extractBody = {
+        image: await fileToBase64(imageFile),
+        mimeType: imageFile.type || 'image/jpeg',
+        extractOnly: true,
+      };
+
+      const extractRes = await fetch('/api/math', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(extractBody),
+      });
+
+      if (!extractRes.ok) {
+        const e = await extractRes.json().catch(() => ({}));
+        throw new Error(e.error || t('try_again'));
+      }
+
+      const extractData = await extractRes.json();
+      detectedEquations = extractData.equations || [];
+
+      // If multiple equations detected, show picker
+      if (detectedEquations.length > 1) {
+        eqPicker.classList.remove('hidden');
+        eqList.innerHTML = '';
+        
+        detectedEquations.forEach((eq, i) => {
+          const item = document.createElement('button');
+          item.className = 'math-eq-item' + (i === 0 ? ' selected' : '');
+          item.innerHTML = `
+            <span class="math-eq-item-num">${i + 1}</span>
+            <span class="math-eq-item-latex"></span>
+          `;
+          // Render with KaTeX
+          const latexSpan = item.querySelector('.math-eq-item-latex');
+          try {
+            if (window.katex) {
+              katex.render(eq, latexSpan, { throwOnError: false, displayMode: false });
+            } else {
+              latexSpan.textContent = eq;
+            }
+          } catch (_) {
+            latexSpan.textContent = eq;
+          }
+          
+          item.addEventListener('click', () => {
+            selectedEquationIndex = i;
+            eqList.querySelectorAll('.math-eq-item').forEach(el => el.classList.remove('selected'));
+            item.classList.add('selected');
+            // Put selected equation in input field
+            document.getElementById('math-text-input').value = eq;
+          });
+          
+          eqList.appendChild(item);
+        });
+
+        selectedEquationIndex = 0;
+        document.getElementById('math-text-input').value = detectedEquations[0];
+        
+        // Reset button state - user needs to click generate again
+        genBtn.disabled = false;
+        lbl.classList.remove('hidden');
+        spn.classList.add('hidden');
+        return;
+      } else if (detectedEquations.length === 1) {
+        // Single equation - put it in input and continue
+        document.getElementById('math-text-input').value = detectedEquations[0];
+        textInput = detectedEquations[0];
+        eqPicker.classList.add('hidden');
+      }
+    }
+
+    // Hide picker when generating
+    eqPicker?.classList.add('hidden');
+
     const body = {
       audience: S.audience,
       language: S.language,
       mode: mathMode,
+      text: textInput || document.getElementById('math-text-input')?.value?.trim(),
+      selectedIndex: selectedEquationIndex,
     };
 
-    if (imageFile) {
-      body.image = await fileToBase64(imageFile);
-      body.mimeType = imageFile.type || 'image/jpeg';
-    } else {
-      body.text = textInput;
+    if (!body.text) {
+      throw new Error(t('type_or_photo'));
     }
 
     const res = await fetch('/api/math', {
@@ -1267,7 +1356,7 @@ async function runMathGenerate(imageFile, textInput) {
 
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
-      throw new Error(e.error || 'May problema. Subukan ulit.');
+      throw new Error(e.error || t('try_again'));
     }
 
     const data = await res.json();

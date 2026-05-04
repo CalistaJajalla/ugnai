@@ -55,6 +55,7 @@ function detectComplexity(latex) {
 }
 
 // Step 1: Extract LaTeX from image using Groq Vision
+// Returns an array of equations when multiple are detected
 async function extractMathFromImage(apiKey, base64Image, mimeType) {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -64,7 +65,7 @@ async function extractMathFromImage(apiKey, base64Image, mimeType) {
     },
     body: JSON.stringify({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      max_tokens: 500,
+      max_tokens: 800,
       messages: [{
         role: 'user',
         content: [
@@ -74,13 +75,27 @@ async function extractMathFromImage(apiKey, base64Image, mimeType) {
           },
           {
             type: 'text',
-            text: `Extract all mathematical equations or expressions from this image.
-Return them as LaTeX notation only.
-If there are multiple equations, put each on its own line.
-Do not include any explanation or text — only the LaTeX.
-Example output format:
-x^2 + 3x - 4 = 0
-\\frac{1}{2} + \\frac{1}{3} = \\frac{5}{6}`,
+            text: `Extract ALL mathematical equations, expressions, or problems from this image.
+
+IMPORTANT RULES:
+1. Each separate equation/expression MUST be on its own line
+2. If you see a numbered list (1, 2, 3... or a, b, c...), each item is a SEPARATE equation
+3. If equations are written on different lines or in columns, they are SEPARATE
+4. Do NOT combine multiple expressions into one
+5. Return ONLY LaTeX notation, no explanations, no numbering
+6. Preserve the mathematical meaning exactly
+
+EXAMPLE - If you see:
+  1) x² + 3x = 4
+  2) (x+2)(x-3)
+  3) 2x + 5 = 11
+
+Return:
+x^2 + 3x = 4
+(x+2)(x-3)
+2x + 5 = 11
+
+Now extract all equations from the image:`,
           },
         ],
       }],
@@ -89,7 +104,15 @@ x^2 + 3x - 4 = 0
 
   if (!response.ok) throw new Error('Hindi nabasa ang equation sa larawan.');
   const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() || '';
+  const rawText = data.choices?.[0]?.message?.content?.trim() || '';
+  
+  // Split by newlines and filter out empty lines
+  const equations = rawText
+    .split(/\n+/)
+    .map(eq => eq.trim())
+    .filter(eq => eq.length > 0 && !eq.match(/^[\d\.\)\:]|^[a-z]\)/i)); // Remove numbering prefixes
+  
+  return equations;
 }
 
 // Step 2: Extract LaTeX from plain text input
@@ -249,18 +272,32 @@ export default async function handler(req, res) {
 
   try {
     const key = pickKey(keys);
+    
+    // Check if this is just an extraction request (no mode specified, image provided)
+    const extractOnly = req.body.extractOnly === true;
 
     // Step 1: Get LaTeX from image or text
-    let latex;
+    let equations;
     if (image) {
-      latex = await extractMathFromImage(key, image, mimeType || 'image/jpeg');
+      equations = await extractMathFromImage(key, image, mimeType || 'image/jpeg');
+      // equations is now an array
     } else {
-      latex = await extractMathFromText(key, text);
+      const latex = await extractMathFromText(key, text);
+      equations = [latex]; // wrap single text input as array
     }
 
-    if (!latex) {
+    if (!equations || equations.length === 0) {
       return res.status(422).json({ error: 'Walang nahanap na equation. Subukan ulit.' });
     }
+    
+    // If extract only, return all equations for user to pick
+    if (extractOnly) {
+      return res.status(200).json({ equations });
+    }
+    
+    // For generation, use the first equation (or specified one)
+    const selectedIndex = req.body.selectedIndex || 0;
+    const latex = equations[Math.min(selectedIndex, equations.length - 1)];
 
     // Step 2: Generate explanation or word problem
     // Math mode always uses English for clarity
@@ -272,7 +309,7 @@ export default async function handler(req, res) {
       mode || 'explanation'
     );
 
-    return res.status(200).json({ latex, content });
+    return res.status(200).json({ latex, content, equations });
 
   } catch (err) {
     console.error('Math handler error:', err);

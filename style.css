@@ -659,6 +659,59 @@ body {
 .math-text-field:focus {
   outline: none; border-color: var(--cyan);
 }
+/* Equation picker (multiple equations) */
+.math-eq-picker {
+  margin: 10px 0;
+  padding: 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-xs);
+}
+.math-eq-picker-title {
+  font-size: 12px; font-weight: 600; color: var(--ink3);
+  margin-bottom: 10px;
+}
+.math-eq-list {
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 200px; overflow-y: auto;
+}
+.math-eq-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  transition: all .15s;
+  text-align: left;
+}
+.math-eq-item:hover {
+  border-color: var(--cyan);
+  background: var(--cyan-lt);
+}
+.math-eq-item.selected {
+  border-color: var(--cyan);
+  background: var(--cyan-lt);
+  box-shadow: 0 0 0 2px rgba(8,145,168,0.15);
+}
+.math-eq-item-num {
+  font-size: 11px; font-weight: 700;
+  color: var(--ink4);
+  background: var(--bg);
+  padding: 3px 8px;
+  border-radius: var(--pill);
+  flex-shrink: 0;
+}
+.math-eq-item.selected .math-eq-item-num {
+  background: var(--cyan);
+  color: #fff;
+}
+.math-eq-item-latex {
+  font-size: 14px;
+  color: var(--ink);
+  overflow-x: auto;
+}
+
 .math-mode-row {
   display: flex; gap: 6px; margin-bottom: 4px;
 }
