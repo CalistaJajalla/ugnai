@@ -16,6 +16,21 @@ function pickKey(keys) {
   return keys[Math.floor(Math.random() * keys.length)];
 }
 
+// Detect complexity level of the equation to adjust prompting
+function detectComplexity(latex) {
+  const complex = [
+    /\\frac/, /\\int/, /\\sum/, /\\prod/, /\\lim/,
+    /\^{[^}]{2,}}/, // exponents with multiple chars like x^{10}
+    /\\sqrt\[/, // nth roots
+    /\\matrix/, /\\begin/,
+    /[a-z]\^[3-9]/, // cubic and higher polynomials
+    /[a-z]\^{[2-9]}/, // same with braces
+  ];
+  const isComplex = complex.some(r => r.test(latex));
+  const hasPolynomial = /[a-z]\^[2-9]|[a-z]\^{[2-9]}/.test(latex);
+  return { isComplex, hasPolynomial };
+}
+
 // Step 1: Extract LaTeX from image using Groq Vision
 async function extractMathFromImage(apiKey, base64Image, mimeType) {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -36,7 +51,7 @@ async function extractMathFromImage(apiKey, base64Image, mimeType) {
           },
           {
             type: 'text',
-            text: `Extract all mathematical equations or expressions from this image. 
+            text: `Extract all mathematical equations or expressions from this image.
 Return them as LaTeX notation only.
 If there are multiple equations, put each on its own line.
 Do not include any explanation or text — only the LaTeX.
@@ -81,15 +96,60 @@ Input: ${text}`,
 // Step 3: Generate explanation or word problem
 async function generateMathContent(apiKey, latex, audience, language, mode) {
   const audienceMap = {
-    parents:   'parents of Filipino elementary or high school students',
-    students:  'Filipino students in the grade level this equation is from',
-    deped:     'DepEd curriculum documentation',
-    principal: 'school principal reviewing lesson content',
+    parents:   'parents of Filipino elementary or high school students (use simple, non-technical language)',
+    students:  'Filipino high school students learning this topic for the first time',
+    deped:     'DepEd curriculum documentation (use formal academic language)',
+    principal: 'school principal reviewing lesson content (brief and professional)',
   };
 
-  const modePrompt = mode === 'word_problem'
-    ? `Create one realistic word problem in the Philippine context that uses this equation. Make it relatable to Filipino students (e.g. use local names, places, everyday Filipino situations like sari-sari store, jeepney fare, etc.).`
-    : `Write a clear, simple explanation of what this equation means and how to solve it.`;
+  const { isComplex, hasPolynomial } = detectComplexity(latex);
+
+  // Build a much more specific prompt based on complexity and mode
+  let taskPrompt;
+
+  if (mode === 'word_problem') {
+    if (hasPolynomial) {
+      taskPrompt = `Create ONE realistic word problem for Filipino students that naturally leads to this polynomial equation.
+Rules:
+- Use a real Philippine setting (sari-sari store, jeepney, palengke, school canteen, barangay, etc.)
+- Use Filipino names (e.g. Juan, Maria, Aling Nena, Kuya Ben)
+- The story must logically and naturally produce this exact equation when solved
+- State what the student needs to find (the unknown variable)
+- Do NOT show the equation itself in the problem — let it come from the situation
+- The numbers must be realistic and make sense in the story
+- Keep it to 3-5 sentences maximum`;
+    } else if (isComplex) {
+      taskPrompt = `Create ONE realistic word problem for Filipino students that uses this equation.
+Rules:
+- Use a real Philippine setting and Filipino names
+- The problem must make practical sense (e.g. budgeting, distance, time, splitting costs)
+- State clearly what the student needs to solve for
+- Do NOT write the equation directly — let it emerge from the problem naturally
+- Keep it to 3-5 sentences`;
+    } else {
+      taskPrompt = `Create one realistic word problem in the Philippine context that uses this equation.
+Use local names, places, and everyday Filipino situations (sari-sari store, jeepney fare, school canteen, etc.).
+State what needs to be solved. Keep it to 3-4 sentences.`;
+    }
+  } else {
+    // Explanation mode
+    if (hasPolynomial) {
+      taskPrompt = `Write a clear step-by-step explanation of this polynomial equation for the audience described.
+Structure your explanation like this:
+1. What type of equation this is (e.g. quadratic, cubic) and what degree it is
+2. What the variable represents and what solving it means
+3. The method to solve it (factoring, quadratic formula, etc.) with each step written out in plain words
+4. What the solution(s) mean in plain language
+Write in plain text only. No markdown, no bullet symbols, no asterisks. Use numbered steps written as sentences.`;
+    } else if (isComplex) {
+      taskPrompt = `Write a clear step-by-step explanation of this equation for the audience described.
+Cover: what the equation is doing, what each part means, how to approach solving or using it, and what the result tells us.
+Write in plain text only. No markdown, no bullet symbols, no asterisks. Use numbered steps written as sentences.`;
+    } else {
+      taskPrompt = `Write a clear, simple explanation of what this equation means and how to solve it, step by step.
+Write in plain text only. No markdown, no bullet symbols, no asterisks.`;
+    }
+  }
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -99,19 +159,23 @@ async function generateMathContent(apiKey, latex, audience, language, mode) {
     },
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
-      max_tokens: 600,
-      messages: [{
-        role: 'user',
-        content: `You are helping a Filipino public school teacher.
-
-Equation (LaTeX): ${latex}
-Audience: ${audienceMap[audience] || 'students'}
+      max_tokens: 800,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a skilled Filipino math teacher helping explain math clearly to different audiences.
+You always write in plain, natural ${language} — no markdown formatting, no asterisks, no bullet symbols, no LaTeX in your output.
+Your explanations are accurate, logical, and easy to follow.`,
+        },
+        {
+          role: 'user',
+          content: `Equation (LaTeX): ${latex}
+Audience: ${audienceMap[audience] || audienceMap.students}
 Language: ${language}
-Task: ${modePrompt}
 
-Output plain text only. No markdown, no asterisks, no LaTeX in the output text.
-Write naturally in ${language}.`,
-      }],
+Task: ${taskPrompt}`,
+        },
+      ],
     }),
   });
 
