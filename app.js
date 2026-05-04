@@ -12,6 +12,373 @@ const S = {
   batch:    {},
 };
 
+// Site language (UI language - separate from output language)
+let siteLang = localStorage.getItem('ugnai_site_lang') || 'tagalog';
+
+// ============================
+// TRANSLATIONS
+// ============================
+const T = {
+  tagalog: {
+    // Header
+    'history': 'Nakaraan',
+    // Meaning strip
+    'meaning_sub': 'mula sa salitang <em>guro</em>, gawa para sa bawat guro sa Pilipinas',
+    // Notes section
+    'your_notes': 'Iyong Tala',
+    'word_count': 'salita',
+    'math_mode': 'Math Mode',
+    'notes_placeholder': 'Halimbawa: May quiz kami sa AP next week tungkol sa Pilipinas noong Kastila. Kailangan ng notebook at ballpen. Miyerkules, Abril 30.',
+    'speak': 'Magsalita',
+    'stop_recording': 'Itigil',
+    'take_photo': 'Kumuha ng Litrato',
+    'reading': 'Binabasa...',
+    // Word count warnings
+    'word_short': 'Medyo maikli pa. Dagdagan mo para mas maganda ang output.',
+    'word_long': 'Medyo mahaba na. Baka gusto mong hatiin sa dalawa?',
+    // OCR
+    'ocr_title': 'Nascan na text. Suriin bago gamitin:',
+    'use_this': 'Gamitin ito',
+    'cancel': 'Kanselahin',
+    // Math mode panel
+    'math_desc': 'I-type o kumuha ng litrato ng equation. Mag-ge-generate ng explanation o word problem para sa iyong klase.',
+    'math_placeholder': 'Halimbawa: x^2 + 3x - 4 = 0',
+    'photo': 'Litrato',
+    'explanation': 'Explanation',
+    'word_problem': 'Word Problem',
+    'generate': 'I-generate',
+    'use_in_notes': 'Gamitin sa notes',
+    // Settings
+    'for_whom': 'Para kanino?',
+    'parents': 'Magulang',
+    'students': 'Estudyante',
+    'deped': 'DepEd',
+    'principal': 'Punong-Guro',
+    'doc_type': 'Anong klase ng sulat?',
+    'letter': 'Liham',
+    'bulletin': 'Bulletin',
+    'deped_report': 'DepEd Report',
+    'for_students': 'Para sa Bata',
+    'reminder': 'Paalala',
+    'weekly': 'Weekly Update',
+    'language': 'Wika',
+    'tone': 'Tono',
+    'warm': 'Mainit',
+    'formal': 'Pormal',
+    'simple': 'Simple',
+    'encouraging': 'Mapanghikayat',
+    'template': 'May template ba?',
+    'for_all': 'Para sa Lahat',
+    // Output
+    'output': 'Output',
+    'draft_warning': 'Draft lang ito. Basahin muna bago ipadala.',
+    'retry': 'Ulitin',
+    'copy': 'Kopyahin',
+    'copied': 'Nakopya!',
+    'listen': 'Pakinggan',
+    'loading_audio': 'Naglo-load...',
+    'stop': 'Itigil',
+    'helpful': 'Nakatulong?',
+    'waiting_output': 'Hinihintay ang output...',
+    'generate_first': 'Mag-generate ka muna para lumabas ang output dito.',
+    'generate_hint': 'Isulat ang gusto mong iparating sa kanan, piliin ang audience, tapos i-generate.',
+    'processing': 'Ginagawa...',
+    'failed': 'Hindi nagawa:',
+    // History
+    'no_history': 'Wala pang nakaraang draft',
+    'search': 'Hanapin...',
+    'delete_all': 'Burahin Lahat',
+    'confirm_delete': 'Burahin lahat ng nakaraan?',
+    // Alerts
+    'write_first': 'Isulat mo muna ang tala mo.',
+    'no_output_yet': 'Wala pang output. Mag-generate muna.',
+    'replace_template': 'Palitan ang nakasulat mo ng template?',
+    'try_again': 'May problema. Subukan ulit mamaya.',
+    'mic_not_allowed': 'Hindi binigyan ng permiso ang mikropono. I-allow ang microphone sa browser settings.',
+    'voice_not_available': 'Hindi available ang voice input sa iyong browser.\n\nSubukan sa Chrome, Edge, o Safari para gumana ito.',
+    'audio_not_available': 'Audio ay hindi available sa iyong browser.',
+    'image_not_read': 'Hindi nabasa ang larawan:',
+    'type_or_photo': 'I-type ang equation o kumuha ng litrato.',
+    // Language picker
+    'choose_language': 'Piliin ang wika ng interface',
+    'language_desc': 'Ito ay para sa mga labels at buttons. Ang output ng AI ay nakadepende pa rin sa setting ng "Wika" sa baba.',
+    'continue': 'Magpatuloy',
+    // Math mode reminder (English)
+    'math_reminder': 'Note: Math Mode generates content in English for clarity.',
+  },
+  english: {
+    // Header
+    'history': 'History',
+    // Meaning strip
+    'meaning_sub': 'from the word <em>guro</em> (teacher), made for every teacher in the Philippines',
+    // Notes section
+    'your_notes': 'Your Notes',
+    'word_count': 'words',
+    'math_mode': 'Math Mode',
+    'notes_placeholder': 'Example: We have a quiz in AP next week about the Philippines during the Spanish era. Students need a notebook and ballpen. Wednesday, April 30.',
+    'speak': 'Speak',
+    'stop_recording': 'Stop',
+    'take_photo': 'Take Photo',
+    'reading': 'Reading...',
+    // Word count warnings
+    'word_short': 'A bit short. Add more for better output.',
+    'word_long': 'Getting long. Consider splitting into two?',
+    // OCR
+    'ocr_title': 'Scanned text. Review before using:',
+    'use_this': 'Use this',
+    'cancel': 'Cancel',
+    // Math mode panel
+    'math_desc': 'Type or take a photo of an equation. Generate an explanation or word problem for your class.',
+    'math_placeholder': 'Example: x^2 + 3x - 4 = 0',
+    'photo': 'Photo',
+    'explanation': 'Explanation',
+    'word_problem': 'Word Problem',
+    'generate': 'Generate',
+    'use_in_notes': 'Use in notes',
+    // Settings
+    'for_whom': 'For whom?',
+    'parents': 'Parents',
+    'students': 'Students',
+    'deped': 'DepEd',
+    'principal': 'Principal',
+    'doc_type': 'What type of document?',
+    'letter': 'Letter',
+    'bulletin': 'Bulletin',
+    'deped_report': 'DepEd Report',
+    'for_students': 'For Students',
+    'reminder': 'Reminder',
+    'weekly': 'Weekly Update',
+    'language': 'Language',
+    'tone': 'Tone',
+    'warm': 'Warm',
+    'formal': 'Formal',
+    'simple': 'Simple',
+    'encouraging': 'Encouraging',
+    'template': 'Use a template?',
+    'for_all': 'For All Audiences',
+    // Output
+    'output': 'Output',
+    'draft_warning': 'This is just a draft. Review before sending.',
+    'retry': 'Retry',
+    'copy': 'Copy',
+    'copied': 'Copied!',
+    'listen': 'Listen',
+    'loading_audio': 'Loading...',
+    'stop': 'Stop',
+    'helpful': 'Helpful?',
+    'waiting_output': 'Waiting for output...',
+    'generate_first': 'Generate first to see output here.',
+    'generate_hint': 'Write your notes on the right, choose the audience, then generate.',
+    'processing': 'Processing...',
+    'failed': 'Failed:',
+    // History
+    'no_history': 'No history yet',
+    'search': 'Search...',
+    'delete_all': 'Delete All',
+    'confirm_delete': 'Delete all history?',
+    // Alerts
+    'write_first': 'Write your notes first.',
+    'no_output_yet': 'No output yet. Generate first.',
+    'replace_template': 'Replace your text with this template?',
+    'try_again': 'Something went wrong. Try again later.',
+    'mic_not_allowed': 'Microphone permission not granted. Allow microphone in browser settings.',
+    'voice_not_available': 'Voice input is not available in your browser.\n\nTry Chrome, Edge, or Safari.',
+    'audio_not_available': 'Audio is not available in your browser.',
+    'image_not_read': 'Could not read the image:',
+    'type_or_photo': 'Type the equation or take a photo.',
+    // Language picker
+    'choose_language': 'Choose interface language',
+    'language_desc': 'This is for labels and buttons. AI output language depends on the "Language" setting below.',
+    'continue': 'Continue',
+    // Math mode reminder (English)
+    'math_reminder': 'Note: Math Mode generates content in English for clarity.',
+  }
+};
+
+function t(key) {
+  return T[siteLang]?.[key] || T['tagalog'][key] || key;
+}
+
+function applyTranslations() {
+  // Header
+  const histToggle = document.getElementById('hist-toggle');
+  if (histToggle) histToggle.innerHTML = `<svg width="14" height="14"><use href="#i-clock"/></svg> ${t('history')}`;
+  
+  // Meaning strip
+  const meaningSub = document.querySelector('.meaning-sub');
+  if (meaningSub) meaningSub.innerHTML = t('meaning_sub');
+  
+  // Notes section
+  const notesH = document.querySelector('#tut-target-notes .card-h');
+  if (notesH) notesH.innerHTML = `<svg width="14" height="14"><use href="#i-pen"/></svg> ${t('your_notes')}`;
+  
+  const notesEl = document.getElementById('notes');
+  if (notesEl) notesEl.placeholder = t('notes_placeholder');
+  
+  const voiceLabel = document.getElementById('voice-label');
+  if (voiceLabel && !document.getElementById('voice-btn')?.classList.contains('recording')) {
+    voiceLabel.textContent = t('speak');
+  }
+  
+  const cameraLabel = document.getElementById('camera-label');
+  if (cameraLabel) cameraLabel.textContent = t('take_photo');
+  
+  // Math mode toggle
+  const mathToggle = document.getElementById('math-toggle');
+  if (mathToggle) mathToggle.innerHTML = `<svg width="13" height="13"><use href="#i-spark"/></svg> ${t('math_mode')}`;
+  
+  // Math panel
+  const mathDesc = document.querySelector('.math-panel-desc');
+  if (mathDesc) mathDesc.textContent = t('math_desc');
+  
+  const mathInput = document.getElementById('math-text-input');
+  if (mathInput) mathInput.placeholder = t('math_placeholder');
+  
+  const mathCameraBtn = document.getElementById('math-camera-btn');
+  if (mathCameraBtn) mathCameraBtn.innerHTML = `<svg width="14" height="14"><use href="#i-camera"/></svg> ${t('photo')}`;
+  
+  document.querySelectorAll('.math-mode-btn').forEach(btn => {
+    if (btn.dataset.mode === 'explanation') btn.textContent = t('explanation');
+    if (btn.dataset.mode === 'word_problem') btn.textContent = t('word_problem');
+  });
+  
+  const mathGenLbl = document.getElementById('math-gen-lbl');
+  if (mathGenLbl) mathGenLbl.textContent = t('generate');
+  
+  const mathUseBtn = document.getElementById('math-use-btn');
+  if (mathUseBtn) mathUseBtn.textContent = t('use_in_notes');
+  
+  // Math reminder
+  const mathReminder = document.getElementById('math-reminder');
+  if (mathReminder) mathReminder.textContent = t('math_reminder');
+  
+  // OCR
+  const ocrTitle = document.querySelector('.ocr-title');
+  if (ocrTitle) ocrTitle.textContent = t('ocr_title');
+  
+  const ocrUse = document.getElementById('ocr-use');
+  if (ocrUse) ocrUse.textContent = t('use_this');
+  
+  const ocrCancel = document.getElementById('ocr-cancel');
+  if (ocrCancel) ocrCancel.textContent = t('cancel');
+  
+  // Settings
+  const forWhom = document.querySelector('#tut-target-audience .grp-lbl');
+  if (forWhom) forWhom.textContent = t('for_whom');
+  
+  document.querySelectorAll('.aud').forEach(btn => {
+    const span = btn.querySelector('span');
+    if (!span) return;
+    if (btn.dataset.a === 'parents') span.textContent = t('parents');
+    if (btn.dataset.a === 'students') span.textContent = t('students');
+    if (btn.dataset.a === 'deped') span.textContent = t('deped');
+    if (btn.dataset.a === 'principal') span.textContent = t('principal');
+  });
+  
+  const docType = document.querySelector('#tut-target-settings > .grp:nth-child(2) > .grp-lbl');
+  if (docType) docType.textContent = t('doc_type');
+  
+  document.querySelectorAll('.chip').forEach(chip => {
+    if (chip.dataset.f === 'letter') chip.textContent = t('letter');
+    if (chip.dataset.f === 'bulletin') chip.textContent = t('bulletin');
+    if (chip.dataset.f === 'deped-report') chip.textContent = t('deped_report');
+    if (chip.dataset.f === 'student-summary') chip.textContent = t('for_students');
+    if (chip.dataset.f === 'reminder') chip.textContent = t('reminder');
+    if (chip.dataset.f === 'weekly') chip.textContent = t('weekly');
+  });
+  
+  const langLbl = document.querySelector('.two-row .grp:first-child .grp-lbl');
+  if (langLbl) langLbl.textContent = t('language');
+  
+  const toneLbl = document.querySelector('.two-row .grp:last-child .grp-lbl');
+  if (toneLbl) toneLbl.textContent = t('tone');
+  
+  document.querySelectorAll('#tone-pills .pill').forEach(pill => {
+    if (pill.dataset.v === 'warm') pill.textContent = t('warm');
+    if (pill.dataset.v === 'formal') pill.textContent = t('formal');
+    if (pill.dataset.v === 'simple') pill.textContent = t('simple');
+    if (pill.dataset.v === 'encouraging') pill.textContent = t('encouraging');
+  });
+  
+  const tmplSel = document.getElementById('tmpl');
+  if (tmplSel) {
+    const firstOpt = tmplSel.querySelector('option[value=""]');
+    if (firstOpt) firstOpt.textContent = t('template');
+  }
+  
+  const genLbl = document.getElementById('gen-lbl');
+  if (genLbl) genLbl.textContent = t('generate');
+  
+  const batchLbl = document.getElementById('batch-lbl');
+  if (batchLbl) batchLbl.textContent = t('for_all');
+  
+  // Output
+  const outputH = document.querySelector('#single-out .card-h');
+  if (outputH) outputH.textContent = t('output');
+  
+  const draftFlag = document.querySelector('.draft-flag');
+  if (draftFlag) draftFlag.innerHTML = `<svg width="13" height="13"><use href="#i-warn"/></svg> ${t('draft_warning')}`;
+  
+  const regenBtn = document.getElementById('regen-btn');
+  if (regenBtn) regenBtn.innerHTML = `<svg width="12" height="12"><use href="#i-refresh"/></svg> ${t('retry')}`;
+  
+  const copyLbl = document.getElementById('copy-lbl');
+  if (copyLbl && copyLbl.textContent !== t('copied')) copyLbl.textContent = t('copy');
+  
+  const speakLbl = document.getElementById('speak-lbl');
+  if (speakLbl && speakLbl.textContent !== t('loading_audio') && speakLbl.textContent !== t('stop')) {
+    speakLbl.textContent = t('listen');
+  }
+  
+  const fbRow = document.querySelector('.fb-row span');
+  if (fbRow) fbRow.textContent = t('helpful');
+  
+  // Batch output labels
+  document.querySelectorAll('.b-lbl').forEach(lbl => {
+    const text = lbl.textContent.trim();
+    if (text.includes('Magulang') || text.includes('Parents')) {
+      lbl.innerHTML = `<svg width="13" height="13"><use href="#i-parents"/></svg> ${t('parents')}`;
+    }
+    if (text.includes('Estudyante') || text.includes('Students')) {
+      lbl.innerHTML = `<svg width="13" height="13"><use href="#i-students"/></svg> ${t('students')}`;
+    }
+    if (text.includes('DepEd')) {
+      lbl.innerHTML = `<svg width="13" height="13"><use href="#i-govt"/></svg> ${t('deped')}`;
+    }
+    if (text.includes('Punong-Guro') || text.includes('Principal')) {
+      lbl.innerHTML = `<svg width="13" height="13"><use href="#i-office"/></svg> ${t('principal')}`;
+    }
+  });
+  
+  // History
+  const histTop = document.querySelector('.hist-top .card-h');
+  if (histTop) histTop.textContent = t('history');
+  
+  const histQ = document.getElementById('hist-q');
+  if (histQ) histQ.placeholder = t('search');
+  
+  const histClear = document.getElementById('hist-clear');
+  if (histClear) histClear.innerHTML = `<svg width="13" height="13"><use href="#i-trash"/></svg> ${t('delete_all')}`;
+  
+  // Update empty output state
+  const outEmpty = document.querySelector('.out-empty p');
+  if (outEmpty) outEmpty.textContent = t('generate_first');
+  
+  const outEmptyHint = document.querySelector('.out-empty-hint');
+  if (outEmptyHint) outEmptyHint.textContent = t('generate_hint');
+}
+
+// Language picker initialization
+// Note: For first-time users, tutorial.js handles showing the lang picker before the tutorial
+// This function handles returning users who might change language later
+function initLangPicker() {
+  // Load saved language preference
+  const savedLang = localStorage.getItem('ugnai_site_lang');
+  if (savedLang) {
+    siteLang = savedLang;
+  }
+}
+
 // ONBOARDING
 let obStep = 1;
 function initOnboard() {
@@ -34,19 +401,19 @@ document.getElementById('ob-next')?.addEventListener('click', () => {
   steps[obStep - 1].classList.add('active');
   dots[obStep - 1].classList.add('on');
   if (obStep === steps.length)
-    document.getElementById('ob-next').textContent = 'Sige na!';
+    document.getElementById('ob-next').textContent = siteLang === 'english' ? 'Got it!' : 'Sige na!';
 });
 
 // WORD COUNT
 const notesEl = document.getElementById('notes');
 notesEl?.addEventListener('input', () => {
   const words = notesEl.value.trim().split(/\s+/).filter(Boolean).length;
-  document.getElementById('wcount').textContent = `${words} salita`;
+  document.getElementById('wcount').textContent = `${words} ${t('word_count')}`;
   let msg = '';
   if (notesEl.value.length > 0 && words < 10)
-    msg = `<span class="w-short">Medyo maikli pa. Dagdagan mo para mas maganda ang output.</span>`;
+    msg = `<span class="w-short">${t('word_short')}</span>`;
   else if (notesEl.value.length > 3000)
-    msg = `<span class="w-long">Medyo mahaba na. Baka gusto mong hatiin sa dalawa?</span>`;
+    msg = `<span class="w-long">${t('word_long')}</span>`;
   document.getElementById('warn').innerHTML = msg;
 });
 
@@ -170,7 +537,7 @@ Contact [teacher name] at [number] for questions.`,
 document.getElementById('tmpl')?.addEventListener('change', e => {
   const val = e.target.value;
   if (!val || !TMPLS[val]) return;
-  if (notesEl.value.trim() && !confirm('Palitan ang nakasulat mo ng template?')) {
+  if (notesEl.value.trim() && !confirm(t('replace_template'))) {
     e.target.value = ''; return;
   }
   notesEl.value = TMPLS[val];
@@ -271,7 +638,7 @@ function stripMarkdown(text) {
 // GENERATE SINGLE
 async function genSingle() {
   const input = notesEl.value.trim();
-  if (!input) { alert('Isulat mo muna ang tala mo.'); return; }
+  if (!input) { alert(t('write_first')); return; }
 
   const btn = document.getElementById('gen-btn');
   const lbl = document.getElementById('gen-lbl');
@@ -281,7 +648,7 @@ async function genSingle() {
   document.getElementById('single-out').classList.remove('hidden');
   document.getElementById('batch-out').classList.add('hidden');
   document.getElementById('out-text').innerHTML =
-    '<div class="out-empty" style="font-style:normal;color:var(--ink3)">Hinihintay ang output...</div>';
+    `<div class="out-empty" style="font-style:normal;color:var(--ink3)">${t('waiting_output')}</div>`;
 
   try {
     const result = await callAPI(buildPrompt(input, S.audience, S.format, S.language, S.tone));
@@ -289,7 +656,7 @@ async function genSingle() {
     document.getElementById('out-text').textContent = result;
     saveHist({ input, output: result, audience: S.audience, format: S.format, language: S.language, tone: S.tone });
   } catch (err) {
-    document.getElementById('out-text').textContent = 'May problema. Subukan ulit mamaya.';
+    document.getElementById('out-text').textContent = t('try_again');
   } finally {
     btn.disabled = false; lbl.classList.remove('hidden'); spn.classList.add('hidden');
   }
@@ -300,7 +667,7 @@ document.getElementById('regen-btn')?.addEventListener('click', genSingle);
 // BATCH GENERATE
 async function genBatch() {
   const input = notesEl.value.trim();
-  if (!input) { alert('Isulat mo muna ang tala mo.'); return; }
+  if (!input) { alert(t('write_first')); return; }
 
   const btn = document.getElementById('batch-btn');
   const lbl = document.getElementById('batch-lbl');
@@ -312,21 +679,21 @@ async function genBatch() {
 
   const auds = ['parents','students','deped','principal'];
   const fmts = { parents:'letter', students:'student-summary', deped:'deped-report', principal:'weekly' };
-  auds.forEach(a => { document.getElementById(`b-${a}`).textContent = 'Ginagawa...'; });
+  auds.forEach(a => { document.getElementById(`b-${a}`).textContent = t('processing'); });
 
   try {
     // Sequential with 1.2s delay between calls - avoids rate limits on free tier keys
     const delay = ms => new Promise(r => setTimeout(r, ms));
     for (let i = 0; i < auds.length; i++) {
       const a = auds[i];
-      document.getElementById(`b-${a}`).textContent = 'Ginagawa...';
+      document.getElementById(`b-${a}`).textContent = t('processing');
       try {
         const result = await callAPI(buildPrompt(input, a, fmts[a], S.language, S.tone), i);
         S.batch[a] = result;
         document.getElementById(`b-${a}`).textContent = result;
       } catch (e) {
-        S.batch[a] = `Hindi nagawa: ${e.message}`;
-        document.getElementById(`b-${a}`).textContent = `Hindi nagawa: ${e.message}`;
+        S.batch[a] = `${t('failed')} ${e.message}`;
+        document.getElementById(`b-${a}`).textContent = `${t('failed')} ${e.message}`;
       }
       if (i < auds.length - 1) await delay(1500);
     }
@@ -356,10 +723,10 @@ document.querySelectorAll('.bc').forEach(b => {
 document.getElementById('copy-btn')?.addEventListener('click', () => {
   if (!S.output) return;
   navigator.clipboard.writeText(S.output).then(() => {
-    document.getElementById('copy-lbl').textContent = 'Nakopya!';
+    document.getElementById('copy-lbl').textContent = t('copied');
     document.getElementById('copy-ico').innerHTML = `<use href="#i-check"/>`;
     setTimeout(() => {
-      document.getElementById('copy-lbl').textContent = 'Kopyahin';
+      document.getElementById('copy-lbl').textContent = t('copy');
       document.getElementById('copy-ico').innerHTML = `<use href="#i-copy"/>`;
     }, 1800);
   });
@@ -367,7 +734,7 @@ document.getElementById('copy-btn')?.addEventListener('click', () => {
 
 // PDF
 document.getElementById('pdf-btn')?.addEventListener('click', () => {
-  if (!S.output) { alert('Wala pang output. Mag-generate muna.'); return; }
+  if (!S.output) { alert(t('no_output_yet')); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const m = 22, pw = doc.internal.pageSize.getWidth() - m * 2;
@@ -419,7 +786,7 @@ function renderHist(filter = '') {
     x.input.toLowerCase().includes(filter.toLowerCase())
   );
   if (!filtered.length) {
-    el.innerHTML = '<div style="color:var(--ink4);font-size:13px;text-align:center;padding:28px">Wala pang nakaraang draft</div>';
+    el.innerHTML = `<div style="color:var(--ink4);font-size:13px;text-align:center;padding:28px">${t('no_history')}</div>`;
     return;
   }
   el.innerHTML = filtered.map(x => `
@@ -460,7 +827,7 @@ document.getElementById('hist-toggle')?.addEventListener('click', () => {
 document.getElementById('hist-close')?.addEventListener('click', () =>
   document.getElementById('hist-panel').classList.add('hidden'));
 document.getElementById('hist-clear')?.addEventListener('click', () => {
-  if (!confirm('Burahin lahat ng nakaraan?')) return;
+  if (!confirm(t('confirm_delete'))) return;
   localStorage.removeItem('ugnai_hist');
   renderHist();
 });
@@ -480,9 +847,9 @@ function initVoice() {
 
   if (!SpeechRecognition) {
     if (btn) {
-      btn.title = 'Ang voice input ay hindi available sa iyong browser. Subukan sa Chrome, Edge, o Safari.';
+      btn.title = t('voice_not_available');
       btn.addEventListener('click', () => {
-        alert('Hindi available ang voice input sa iyong browser.\n\nSubukan sa Chrome, Edge, o Safari para gumana ito.');
+        alert(t('voice_not_available'));
       });
     }
     return;
@@ -514,7 +881,7 @@ function initVoice() {
     console.error('Speech error:', event.error);
     stopRecording();
     if (event.error === 'not-allowed') {
-      alert('Hindi binigyan ng permiso ang mikropono. I-allow ang microphone sa browser settings.');
+      alert(t('mic_not_allowed'));
     }
   };
 
@@ -539,7 +906,7 @@ function startRecording() {
   recognition.start();
   isRecording = true;
   btn?.classList.add('recording');
-  if (label) label.textContent = 'Itigil';
+  if (label) label.textContent = t('stop_recording');
 }
 
 function stopRecording() {
@@ -548,7 +915,7 @@ function stopRecording() {
   const btn = document.getElementById('voice-btn');
   const label = document.getElementById('voice-label');
   btn?.classList.remove('recording');
-  if (label) label.textContent = 'Magsalita';
+  if (label) label.textContent = t('speak');
 }
 
 // CAMERA OCR
@@ -561,7 +928,7 @@ async function handleCameraCapture(file) {
   const btn = document.getElementById('camera-btn');
 
   btn.disabled = true;
-  if (label) label.textContent = 'Binabasa...';
+  if (label) label.textContent = t('reading');
 
   try {
     const base64 = await fileToBase64(file);
@@ -582,10 +949,10 @@ async function handleCameraCapture(file) {
     showOcrReview(data.text);
 
   } catch (err) {
-    alert('Hindi nabasa ang larawan: ' + err.message);
+    alert(t('image_not_read') + ' ' + err.message);
   } finally {
     btn.disabled = false;
-    if (label) label.textContent = 'Kumuha ng Litrato';
+    if (label) label.textContent = t('take_photo');
   }
 }
 
@@ -709,7 +1076,7 @@ let currentAudio = null;
 
 async function speakOutput() {
   const text = S.output;
-  if (!text) { alert('Wala pang output. Mag-generate muna.'); return; }
+  if (!text) { alert(t('no_output_yet')); return; }
 
   const btn = document.getElementById('speak-btn');
   const lbl = document.getElementById('speak-lbl');
@@ -719,12 +1086,12 @@ async function speakOutput() {
     currentAudio.pause();
     currentAudio.currentTime = 0;
     currentAudio = null;
-    lbl.textContent = 'Pakinggan';
+    lbl.textContent = t('listen');
     return;
   }
 
   btn.disabled = true;
-  lbl.textContent = 'Naglo-load...';
+  lbl.textContent = t('loading_audio');
 
   try {
     const res = await fetch('/api/speak', {
@@ -747,10 +1114,10 @@ async function speakOutput() {
     const audioSrc = `data:${data.mimeType};base64,${data.audio}`;
     currentAudio = new Audio(audioSrc);
     currentAudio.play();
-    lbl.textContent = 'Itigil';
+    lbl.textContent = t('stop');
 
     currentAudio.onended = () => {
-      lbl.textContent = 'Pakinggan';
+      lbl.textContent = t('listen');
       currentAudio = null;
     };
 
@@ -766,16 +1133,16 @@ function browserSpeak(text) {
   // Browser built-in TTS as fallback when ElevenLabs not available
   const lbl = document.getElementById('speak-lbl');
   if (!window.speechSynthesis) {
-    alert('Audio ay hindi available sa iyong browser.');
+    alert(t('audio_not_available'));
     return;
   }
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = S.language === 'English' ? 'en-PH' : 'fil-PH';
   utt.rate = 0.9;
-  utt.onend = () => { lbl.textContent = 'Pakinggan'; };
+  utt.onend = () => { lbl.textContent = t('listen'); };
   window.speechSynthesis.speak(utt);
-  lbl.textContent = 'Itigil';
+  lbl.textContent = t('stop');
 }
 
 document.getElementById('speak-btn')?.addEventListener('click', speakOutput);
@@ -827,7 +1194,7 @@ function initMathMode() {
   // Text generate
   genBtn?.addEventListener('click', async () => {
     const textInput = document.getElementById('math-text-input')?.value?.trim();
-    if (!textInput) { alert('I-type ang equation o kumuha ng litrato.'); return; }
+    if (!textInput) { alert(t('type_or_photo')); return; }
     await runMathGenerate(null, textInput);
   });
 
@@ -916,4 +1283,6 @@ async function runMathGenerate(imageFile, textInput) {
   initMathMode();
   mem0Load();
   hookMem0();
+  initLangPicker();
+  applyTranslations();
 })();

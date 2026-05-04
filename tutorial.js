@@ -2,7 +2,12 @@
 // Highlights real UI elements with a spotlight effect.
 // Only shows on first visit. Can be dismissed anytime.
 
-const STEPS = [
+// Get site language from localStorage (default to tagalog)
+function getSiteLang() {
+  return localStorage.getItem('ugnai_site_lang') || 'tagalog';
+}
+
+const STEPS_TAGALOG = [
   {
     target: 'tut-target-notes',
     icon:  'i-pen',
@@ -39,6 +44,48 @@ const STEPS = [
     pos:   'left',
   },
 ];
+
+const STEPS_ENGLISH = [
+  {
+    target: 'tut-target-notes',
+    icon:  'i-pen',
+    title: 'Write your notes',
+    body:  'Type or paste your lesson notes, announcements, or any message here. Don\'t worry about formatting, just write naturally in your preferred language.',
+    pos:   'right',
+  },
+  {
+    target: 'tut-target-audience',
+    icon:  'i-parents',
+    title: 'Choose the recipient',
+    body:  'Who will read the message? Choose Parents, Students, DepEd, or Principal. Each has a different tone and format that UGNai will automatically use.',
+    pos:   'right',
+  },
+  {
+    target: null,
+    icon:  'i-spark',
+    title: 'Format and language',
+    body:  'Choose what type of document (letter, bulletin, report) and in what language. You can also select the tone: warm for parents, formal for DepEd.',
+    pos:   'center',
+  },
+  {
+    target: 'tut-target-generate',
+    icon:  'i-spark',
+    title: 'Generate the draft',
+    body:  'Click "Generate" for one output, or "For All Audiences" to get four versions at once: for parents, students, DepEd, and principal.',
+    pos:   'right',
+  },
+  {
+    target: 'tut-target-output',
+    icon:  'i-copy',
+    title: 'Review and copy',
+    body:  'Always review the output before sending. Click "Copy" and paste into your messaging app or email. You are still the sender, not automatic.',
+    pos:   'left',
+  },
+];
+
+function getSteps() {
+  return getSiteLang() === 'english' ? STEPS_ENGLISH : STEPS_TAGALOG;
+}
 
 let currentStep = 0;
 let spotlight = null;
@@ -98,9 +145,11 @@ function positionCard(rect, pos) {
 }
 
 function showStep(index) {
+  const STEPS = getSteps();
   const step = STEPS[index];
   const wrap = getTutorialWrap();
   const card = getCard();
+  const lang = getSiteLang();
 
   // Update badge
   document.getElementById('tut-badge').textContent = `${index + 1} / ${STEPS.length}`;
@@ -120,9 +169,19 @@ function showStep(index) {
 
   // Update button label on last step
   const nextBtn = document.getElementById('tut-next');
-  nextBtn.innerHTML = index === STEPS.length - 1
-    ? 'Tapos na! <svg width="14" height="14"><use href="#i-check"/></svg>'
-    : 'Susunod <svg width="14" height="14"><use href="#i-arrow-r"/></svg>';
+  if (index === STEPS.length - 1) {
+    nextBtn.innerHTML = lang === 'english' 
+      ? 'Done! <svg width="14" height="14"><use href="#i-check"/></svg>'
+      : 'Tapos na! <svg width="14" height="14"><use href="#i-check"/></svg>';
+  } else {
+    nextBtn.innerHTML = lang === 'english'
+      ? 'Next <svg width="14" height="14"><use href="#i-arrow-r"/></svg>'
+      : 'Susunod <svg width="14" height="14"><use href="#i-arrow-r"/></svg>';
+  }
+  
+  // Update skip button
+  const skipBtn = document.getElementById('tut-skip');
+  if (skipBtn) skipBtn.textContent = lang === 'english' ? 'Skip' : 'Laktawan';
 
   // Spotlight + position
   const sp = createSpotlight();
@@ -149,6 +208,7 @@ function showStep(index) {
 }
 
 function nextStep() {
+  const STEPS = getSteps();
   if (currentStep >= STEPS.length - 1) {
     endTutorial();
     return;
@@ -167,6 +227,15 @@ function initTutorial() {
     getTutorialWrap().classList.add('hidden');
     return;
   }
+  
+  // Check if language has been chosen - if not, show language picker first
+  const langChosen = localStorage.getItem('ugnai_site_lang');
+  if (!langChosen) {
+    // Show language picker first, tutorial will start after language is chosen
+    getTutorialWrap().classList.add('hidden');
+    showLangPickerBeforeTutorial();
+    return;
+  }
 
   // Show tutorial
   getTutorialWrap().classList.remove('hidden');
@@ -180,6 +249,60 @@ function initTutorial() {
     if (!getTutorialWrap().classList.contains('hidden')) {
       showStep(currentStep);
     }
+  });
+}
+
+// Show language picker before tutorial starts
+function showLangPickerBeforeTutorial() {
+  const picker = document.getElementById('lang-picker');
+  if (!picker) return;
+  
+  picker.classList.remove('hidden');
+  
+  // Handle language selection - then start tutorial
+  const handleLangSelect = (lang) => {
+    const newLang = lang === 'English' ? 'english' : 'tagalog';
+    localStorage.setItem('ugnai_site_lang', newLang);
+    
+    // Update the global siteLang variable in app.js
+    if (typeof siteLang !== 'undefined') {
+      siteLang = newLang;
+    }
+    
+    picker.classList.add('hidden');
+    
+    // Apply translations if the function exists in app.js
+    if (typeof applyTranslations === 'function') {
+      applyTranslations();
+    }
+    
+    // Now show the tutorial
+    getTutorialWrap().classList.remove('hidden');
+    showStep(0);
+    
+    // Setup tutorial event listeners
+    document.getElementById('tut-next').addEventListener('click', nextStep);
+    document.getElementById('tut-skip').addEventListener('click', endTutorial);
+    
+    // Reposition on resize
+    window.addEventListener('resize', () => {
+      if (!getTutorialWrap().classList.contains('hidden')) {
+        showStep(currentStep);
+      }
+    });
+  };
+  
+  // Attach handlers to language buttons
+  document.querySelectorAll('.langpick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      handleLangSelect(btn.dataset.lang);
+    });
+  });
+  
+  // Skip button defaults to Tagalog
+  const skipBtn = document.querySelector('.langpick-skip');
+  skipBtn?.addEventListener('click', () => {
+    handleLangSelect('Filipino');
   });
 }
 

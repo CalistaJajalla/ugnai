@@ -82,29 +82,26 @@
   </div>
 </div>
 
-<!-- LANGUAGE PICKER: shown after tutorial, first visit only -->
+<!-- LANGUAGE PICKER: shown before tutorial -->
 <div id="lang-picker" class="langpick-wrap hidden">
   <div class="langpick-card">
     <div class="langpick-icon">
       <svg width="28" height="28"><use href="#i-spark"/></svg>
     </div>
-    <h2>Anong wika ang mas komportable sa iyo?</h2>
-    <p>Ise-set namin ito para sa lahat ng iyong mga output. Mababago mo ito anumang oras.</p>
+    <h2>Choose your interface language / Piliin ang wika ng interface</h2>
+    <p>This changes the labels and buttons. AI output language can be set separately below.<br/>
+       Ito ay para sa mga labels at buttons. Ang wika ng AI output ay pwedeng i-set sa baba.</p>
     <div class="langpick-options">
       <button class="langpick-btn" data-lang="Filipino">
-        <span class="langpick-name">Filipino</span>
-        <span class="langpick-desc">Pangunahing wikang Filipino</span>
-      </button>
-      <button class="langpick-btn" data-lang="Taglish">
-        <span class="langpick-name">Taglish</span>
-        <span class="langpick-desc">Halo ng Filipino at English</span>
+        <span class="langpick-name">Tagalog</span>
+        <span class="langpick-desc">Interface sa wikang Tagalog</span>
       </button>
       <button class="langpick-btn" data-lang="English">
         <span class="langpick-name">English</span>
-        <span class="langpick-desc">Puro English ang output</span>
+        <span class="langpick-desc">Interface in English</span>
       </button>
     </div>
-    <button class="langpick-skip">Laktawan</button>
+    <button class="langpick-skip">Tagalog na lang / Just use Tagalog</button>
   </div>
 </div>
 
@@ -249,7 +246,8 @@
               <svg width="14" height="14"><use href="#i-x"/></svg>
             </button>
           </div>
-          <p class="math-panel-desc">I-type o kumuha ng litrato ng equation. Mag-ge-generate ng explanation o word problem para sa iyong klase.</p>
+          <p class="math-panel-desc">Type or take a photo of an equation. Generate an explanation or word problem for your class.</p>
+          <p class="math-reminder" id="math-reminder">Note: Math Mode generates content in English for clarity.</p>
 
           <div class="math-input-row">
             <input type="text" id="math-text-input" class="math-text-field" placeholder="Halimbawa: x^2 + 3x - 4 = 0"/>
