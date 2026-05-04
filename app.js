@@ -1218,12 +1218,14 @@ function initMathMode() {
     await runMathGenerate(null, textInput);
   });
 
-  // Use result in notes
+  // Use result in notes - store original content for copying
   useBtn?.addEventListener('click', () => {
     const contentBox = document.getElementById('math-content-box');
-    if (!contentBox?.textContent) return;
+    // Use data attribute for original content, fallback to textContent
+    const originalContent = contentBox?.dataset.originalContent || contentBox?.textContent;
+    if (!originalContent) return;
     const notesEl = document.getElementById('notes');
-    notesEl.value = contentBox.textContent;
+    notesEl.value = originalContent;
     notesEl.dispatchEvent(new Event('input'));
     panel.classList.add('hidden');
     toggleBtn?.classList.remove('on');
@@ -1282,7 +1284,22 @@ async function runMathGenerate(imageFile, textInput) {
       eqBox.textContent = data.latex;
     }
 
-    contentBox.textContent = data.content;
+    // Store original content for "Use in notes" button
+    contentBox.dataset.originalContent = data.content;
+    
+    // Render content with KaTeX for inline math
+    contentBox.innerHTML = data.content;
+    if (window.renderMathInElement) {
+      renderMathInElement(contentBox, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\(', right: '\\)', display: false }
+        ],
+        throwOnError: false
+      });
+    }
     result.classList.remove('hidden');
 
   } catch (err) {
