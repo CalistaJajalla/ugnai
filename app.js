@@ -1,7 +1,6 @@
 // ============================
 // UGNAI - app.js
 // Calls /api/generate (server-side proxy).
-// Users never see or need an API key.
 // ============================
 
 const S = {
@@ -642,10 +641,279 @@ function initCamera() {
   ocrClose?.addEventListener('click', hideOcrReview);
 }
 
+// MEM0 — remembers teacher preferences across sessions
+// Uses localStorage as a simple persistent memory layer
+// In a future version this can connect to the real mem0 API
+
+const MEM0_KEY = 'ugnai_prefs';
+
+function mem0Save() {
+  const prefs = {
+    language: S.language,
+    tone: S.tone,
+    audience: S.audience,
+    format: S.format,
+  };
+  localStorage.setItem(MEM0_KEY, JSON.stringify(prefs));
+}
+
+function mem0Load() {
+  try {
+    const saved = localStorage.getItem(MEM0_KEY);
+    if (!saved) return;
+    const prefs = JSON.parse(saved);
+
+    // Restore language
+    if (prefs.language) {
+      S.language = prefs.language;
+      document.querySelectorAll('#lang-pills .pill').forEach(b => {
+        b.classList.toggle('on', b.dataset.v === prefs.language);
+      });
+    }
+
+    // Restore tone
+    if (prefs.tone) {
+      S.tone = prefs.tone;
+      document.querySelectorAll('#tone-pills .pill').forEach(b => {
+        b.classList.toggle('on', b.dataset.v === prefs.tone);
+      });
+    }
+
+    // Restore audience
+    if (prefs.audience) {
+      S.audience = prefs.audience;
+      document.querySelectorAll('.aud').forEach(b => {
+        b.classList.toggle('on', b.dataset.a === prefs.audience);
+      });
+    }
+
+    // Restore format
+    if (prefs.format) {
+      S.format = prefs.format;
+      document.querySelectorAll('.chip').forEach(c => {
+        c.classList.toggle('on', c.dataset.f === prefs.format);
+      });
+    }
+  } catch (_) {}
+}
+
+// Save prefs whenever any control changes
+function hookMem0() {
+  document.querySelectorAll('.aud, .chip, #lang-pills .pill, #tone-pills .pill').forEach(el => {
+    el.addEventListener('click', () => setTimeout(mem0Save, 100));
+  });
+}
+
+// ELEVENLABS — listen to output
+let currentAudio = null;
+
+async function speakOutput() {
+  const text = S.output;
+  if (!text) { alert('Wala pang output. Mag-generate muna.'); return; }
+
+  const btn = document.getElementById('speak-btn');
+  const lbl = document.getElementById('speak-lbl');
+
+  // If already playing, stop it
+  if (currentAudio && !currentAudio.paused) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+    lbl.textContent = 'Pakinggan';
+    return;
+  }
+
+  btn.disabled = true;
+  lbl.textContent = 'Naglo-load...';
+
+  try {
+    const res = await fetch('/api/speak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!res.ok) {
+      // ElevenLabs not configured — fall back to browser TTS
+      const e = await res.json().catch(() => ({}));
+      if (res.status === 503) {
+        browserSpeak(text);
+        return;
+      }
+      throw new Error(e.error || 'Hindi nagawa ang audio.');
+    }
+
+    const data = await res.json();
+    const audioSrc = `data:${data.mimeType};base64,${data.audio}`;
+    currentAudio = new Audio(audioSrc);
+    currentAudio.play();
+    lbl.textContent = 'Itigil';
+
+    currentAudio.onended = () => {
+      lbl.textContent = 'Pakinggan';
+      currentAudio = null;
+    };
+
+  } catch (err) {
+    // Fall back to browser TTS
+    browserSpeak(text);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function browserSpeak(text) {
+  // Browser built-in TTS as fallback when ElevenLabs not available
+  const lbl = document.getElementById('speak-lbl');
+  if (!window.speechSynthesis) {
+    alert('Audio ay hindi available sa iyong browser.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = S.language === 'English' ? 'en-PH' : 'fil-PH';
+  utt.rate = 0.9;
+  utt.onend = () => { lbl.textContent = 'Pakinggan'; };
+  window.speechSynthesis.speak(utt);
+  lbl.textContent = 'Itigil';
+}
+
+document.getElementById('speak-btn')?.addEventListener('click', speakOutput);
+
+// MATH MODE
+let mathMode = 'explanation';
+
+function initMathMode() {
+  const toggleBtn = document.getElementById('math-toggle');
+  const panel = document.getElementById('math-panel');
+  const closeBtn = document.getElementById('math-close');
+  const genBtn = document.getElementById('math-generate-btn');
+  const lbl = document.getElementById('math-gen-lbl');
+  const spn = document.getElementById('math-gen-spin');
+  const cameraBtn = document.getElementById('math-camera-btn');
+  const cameraInput = document.getElementById('math-camera-input');
+  const useBtn = document.getElementById('math-use-btn');
+
+  // Toggle panel
+  toggleBtn?.addEventListener('click', () => {
+    const isOpen = !panel.classList.contains('hidden');
+    panel.classList.toggle('hidden', isOpen);
+    toggleBtn.classList.toggle('on', !isOpen);
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    panel.classList.add('hidden');
+    toggleBtn?.classList.remove('on');
+  });
+
+  // Mode buttons
+  document.querySelectorAll('.math-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.math-mode-btn').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      mathMode = btn.dataset.mode;
+    });
+  });
+
+  // Camera input
+  cameraBtn?.addEventListener('click', () => cameraInput?.click());
+  cameraInput?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    cameraInput.value = '';
+    await runMathGenerate(file, null);
+  });
+
+  // Text generate
+  genBtn?.addEventListener('click', async () => {
+    const textInput = document.getElementById('math-text-input')?.value?.trim();
+    if (!textInput) { alert('I-type ang equation o kumuha ng litrato.'); return; }
+    await runMathGenerate(null, textInput);
+  });
+
+  // Use result in notes
+  useBtn?.addEventListener('click', () => {
+    const contentBox = document.getElementById('math-content-box');
+    if (!contentBox?.textContent) return;
+    const notesEl = document.getElementById('notes');
+    notesEl.value = contentBox.textContent;
+    notesEl.dispatchEvent(new Event('input'));
+    panel.classList.add('hidden');
+    toggleBtn?.classList.remove('on');
+  });
+}
+
+async function runMathGenerate(imageFile, textInput) {
+  const genBtn = document.getElementById('math-generate-btn');
+  const lbl = document.getElementById('math-gen-lbl');
+  const spn = document.getElementById('math-gen-spin');
+  const result = document.getElementById('math-result');
+  const eqBox = document.getElementById('math-eq-box');
+  const contentBox = document.getElementById('math-content-box');
+
+  genBtn.disabled = true;
+  lbl.classList.add('hidden');
+  spn.classList.remove('hidden');
+  result.classList.add('hidden');
+
+  try {
+    const body = {
+      audience: S.audience,
+      language: S.language,
+      mode: mathMode,
+    };
+
+    if (imageFile) {
+      body.image = await fileToBase64(imageFile);
+      body.mimeType = imageFile.type || 'image/jpeg';
+    } else {
+      body.text = textInput;
+    }
+
+    const res = await fetch('/api/math', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || 'May problema. Subukan ulit.');
+    }
+
+    const data = await res.json();
+
+    // Render equation using KaTeX
+    eqBox.innerHTML = '';
+    try {
+      if (window.katex) {
+        katex.render(data.latex, eqBox, { throwOnError: false, displayMode: true });
+      } else {
+        eqBox.textContent = data.latex;
+      }
+    } catch (_) {
+      eqBox.textContent = data.latex;
+    }
+
+    contentBox.textContent = data.content;
+    result.classList.remove('hidden');
+
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    genBtn.disabled = false;
+    lbl.classList.remove('hidden');
+    spn.classList.add('hidden');
+  }
+}
+
 // INIT
 (function init() {
   initOnboard();
   renderHist();
   initVoice();
   initCamera();
+  initMathMode();
+  mem0Load();
+  hookMem0();
 })();
