@@ -534,3 +534,140 @@ body {
   gap: 8px;
   margin-top: 10px;
 }
+
+/* LANGUAGE PICKER */
+.langpick-wrap {
+  position: fixed; inset: 0; z-index: 600;
+  background: rgba(10,20,40,0.7);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.langpick-card {
+  background: var(--card);
+  border: 1.5px solid var(--blue-md);
+  border-top: 3px solid var(--blue);
+  border-radius: var(--r);
+  max-width: 420px; width: 100%;
+  padding: 36px 32px 28px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.langpick-icon {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--blue-lt); color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+}
+.langpick-card h2 {
+  font-size: 18px; font-weight: 800; color: var(--ink);
+  margin-bottom: 10px; line-height: 1.3;
+}
+.langpick-card p {
+  font-size: 13.5px; color: var(--ink3); margin-bottom: 24px; line-height: 1.6;
+}
+.langpick-options {
+  display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;
+}
+.langpick-btn {
+  display: flex; flex-direction: column; align-items: flex-start;
+  background: var(--bg); border: 1.5px solid var(--line);
+  border-radius: var(--r-sm); padding: 14px 16px;
+  cursor: pointer; transition: all .18s; text-align: left;
+  font-family: var(--sans);
+}
+.langpick-btn:hover {
+  border-color: var(--blue); background: var(--blue-lt);
+}
+.langpick-btn.selected {
+  border-color: var(--blue); background: var(--blue-lt);
+}
+.langpick-name {
+  font-size: 15px; font-weight: 800; color: var(--ink); margin-bottom: 2px;
+}
+.langpick-desc {
+  font-size: 12px; color: var(--ink3); font-weight: 500;
+}
+.langpick-skip {
+  background: none; border: none; color: var(--ink4);
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  cursor: pointer; padding: 8px 16px; border-radius: var(--r-xs);
+  transition: color .15s;
+}
+.langpick-skip:hover { color: var(--ink2); }
+
+/* MATH MODE */
+.math-toggle {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--cyan-lt); border: 1.5px solid var(--cyan);
+  color: var(--cyan); padding: 5px 12px; border-radius: var(--pill);
+  font-family: var(--sans); font-size: 11.5px; font-weight: 700;
+  cursor: pointer; transition: all .18s; white-space: nowrap;
+}
+.math-toggle:hover, .math-toggle.on {
+  background: var(--cyan); color: #fff;
+}
+.math-panel {
+  margin-top: 12px;
+  background: var(--cyan-lt);
+  border: 1.5px solid var(--cyan);
+  border-radius: var(--r-sm);
+  padding: 16px;
+}
+.math-panel-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.math-panel-title {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 800; color: var(--cyan);
+}
+.math-panel-close {
+  background: none; border: none; color: var(--ink4);
+  cursor: pointer; display: flex; padding: 2px;
+}
+.math-panel-desc {
+  font-size: 12.5px; color: var(--ink3); margin-bottom: 14px; line-height: 1.5;
+}
+.math-input-row {
+  display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.math-text-field {
+  flex: 1; min-width: 0;
+  background: var(--card); border: 1.5px solid var(--line);
+  border-radius: var(--r-xs); color: var(--ink);
+  padding: 9px 12px; font-family: var(--sans); font-size: 14px;
+}
+.math-text-field:focus {
+  outline: none; border-color: var(--cyan);
+}
+.math-mode-row {
+  display: flex; gap: 6px; margin-bottom: 4px;
+}
+.math-mode-btn {
+  background: var(--card); border: 1.5px solid var(--line);
+  color: var(--ink3); padding: 5px 14px; border-radius: var(--pill);
+  font-family: var(--sans); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all .18s;
+}
+.math-mode-btn.on {
+  background: var(--cyan-lt); border-color: var(--cyan); color: var(--cyan);
+}
+.math-result {
+  margin-top: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xs);
+  padding: 14px;
+}
+.math-eq-box {
+  font-size: 20px; text-align: center;
+  padding: 14px 10px; margin-bottom: 12px;
+  background: var(--bg);
+  border-radius: var(--r-xs);
+  overflow-x: auto;
+}
+.math-content-box {
+  font-size: 13.5px; line-height: 1.75; color: var(--ink);
+  white-space: pre-wrap;
+}
