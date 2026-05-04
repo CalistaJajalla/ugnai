@@ -14,6 +14,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
 
@@ -40,6 +43,7 @@
   <symbol id="i-mic"      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
   <symbol id="i-camera"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
   <symbol id="i-mic-off"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+  <symbol id="i-speaker"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></symbol>
   <symbol id="i-arrow-r"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"   stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
 </svg>
 
@@ -75,6 +79,32 @@
         </button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- LANGUAGE PICKER: shown after tutorial, first visit only -->
+<div id="lang-picker" class="langpick-wrap hidden">
+  <div class="langpick-card">
+    <div class="langpick-icon">
+      <svg width="28" height="28"><use href="#i-spark"/></svg>
+    </div>
+    <h2>Anong wika ang mas komportable sa iyo?</h2>
+    <p>Ise-set namin ito para sa lahat ng iyong mga output. Mababago mo ito anumang oras.</p>
+    <div class="langpick-options">
+      <button class="langpick-btn" data-lang="Filipino">
+        <span class="langpick-name">Filipino</span>
+        <span class="langpick-desc">Pangunahing wikang Filipino</span>
+      </button>
+      <button class="langpick-btn" data-lang="Taglish">
+        <span class="langpick-name">Taglish</span>
+        <span class="langpick-desc">Halo ng Filipino at English</span>
+      </button>
+      <button class="langpick-btn" data-lang="English">
+        <span class="langpick-name">English</span>
+        <span class="langpick-desc">Puro English ang output</span>
+      </button>
+    </div>
+    <button class="langpick-skip">Laktawan</button>
   </div>
 </div>
 
@@ -127,6 +157,7 @@
               <button class="act" id="regen-btn"><svg width="12" height="12"><use href="#i-refresh"/></svg> Ulitin</button>
               <button class="act" id="copy-btn"><svg width="12" height="12" id="copy-ico"><use href="#i-copy"/></svg><span id="copy-lbl">Kopyahin</span></button>
               <button class="act" id="pdf-btn"><svg width="12" height="12"><use href="#i-pdf"/></svg> PDF</button>
+              <button class="act" id="speak-btn"><svg width="12" height="12" id="speak-ico"><use href="#i-speaker"/></svg><span id="speak-lbl">Pakinggan</span></button>
             </div>
           </div>
           <div id="out-text" class="out-text">
@@ -165,7 +196,13 @@
             <svg width="14" height="14"><use href="#i-pen"/></svg>
             Iyong Tala
           </h2>
-          <span id="wcount" class="wcount">0 salita</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="wcount" class="wcount">0 salita</span>
+            <button class="math-toggle" id="math-toggle" title="Math mode">
+              <svg width="13" height="13"><use href="#i-spark"/></svg>
+              Math Mode
+            </button>
+          </div>
         </div>
         <textarea id="notes" class="textarea"
           placeholder="Halimbawa: May quiz kami sa AP next week tungkol sa Pilipinas noong Kastila. Kailangan ng notebook at ballpen. Miyerkules, Abril 30."
@@ -200,6 +237,50 @@
         </div>
 
         <div id="warn" class="warn"></div>
+
+        <!-- MATH MODE PANEL -->
+        <div id="math-panel" class="math-panel hidden">
+          <div class="math-panel-header">
+            <span class="math-panel-title">
+              <svg width="13" height="13"><use href="#i-spark"/></svg>
+              Math Mode
+            </span>
+            <button class="math-panel-close" id="math-close">
+              <svg width="14" height="14"><use href="#i-x"/></svg>
+            </button>
+          </div>
+          <p class="math-panel-desc">I-type o kumuha ng litrato ng equation. Mag-ge-generate ng explanation o word problem para sa iyong klase.</p>
+
+          <div class="math-input-row">
+            <input type="text" id="math-text-input" class="math-text-field" placeholder="Halimbawa: x^2 + 3x - 4 = 0"/>
+            <button class="tool-btn" id="math-camera-btn">
+              <svg width="14" height="14"><use href="#i-camera"/></svg>
+              Litrato
+            </button>
+            <input type="file" id="math-camera-input" accept="image/*" capture="environment" style="display:none"/>
+          </div>
+
+          <div class="math-mode-row">
+            <button class="math-mode-btn on" data-mode="explanation">Explanation</button>
+            <button class="math-mode-btn" data-mode="word_problem">Word Problem</button>
+          </div>
+
+          <button class="btn-primary" id="math-generate-btn" style="width:100%;margin-top:10px">
+            <svg width="14" height="14"><use href="#i-spark"/></svg>
+            <span id="math-gen-lbl">I-generate</span>
+            <span id="math-gen-spin" class="spin hidden"></span>
+          </button>
+
+          <!-- Rendered equation output -->
+          <div id="math-result" class="math-result hidden">
+            <div class="math-eq-box" id="math-eq-box"></div>
+            <div class="math-content-box" id="math-content-box"></div>
+            <button class="act" id="math-use-btn" style="margin-top:10px">
+              Gamitin sa notes
+            </button>
+          </div>
+        </div>
+
       </section>
 
       <!-- SETTINGS -->
