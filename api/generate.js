@@ -1,9 +1,6 @@
 // api/generate.js
 // UGNai API proxy using Groq
-// Model: llama-3.3-70b -- Currently 2 keys
-
-// KEY SETUP - supports up to 10 API keys for load balancing
-// Keys: GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3, etc.
+// Model: llama-3.3-70b -- Currently 3 keys
 
 let globalKeyIndex = 0; // Round-robin counter
 
