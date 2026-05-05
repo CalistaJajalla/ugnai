@@ -96,6 +96,7 @@ RULES:
 - NO "Let me analyze" or "The image shows"
 - Just the raw content extracted
 - Use \\frac{a}{b} for fractions
+- For division, write as \\frac{a}{b} or a \\div b (NOT \\enclose or \\longdiv)
 - If truly nothing found: NO_CONTENT_FOUND`,
           },
         ],

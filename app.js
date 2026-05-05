@@ -1410,29 +1410,50 @@ async function runMathGenerateWithData(base64Image, mimeType, textInput) {
       throw new Error('Hindi makita ang equation. Subukan ulit.');
     }
 
-    // Render equation using KaTeX
+    // Render equation using KaTeX or show as text for non-math content
     eqBox.innerHTML = '';
     eqBox.classList.remove('math-error');
-    try {
-      if (window.katex && data.latex) {
-        // Clean up common issues in LaTeX
-        let cleanLatex = data.latex
-          .replace(/\\\\/g, '\\')  // Fix double backslashes
-          .replace(/\$\$/g, '')    // Remove $$ markers if present
-          .replace(/^\$|\$$/g, '') // Remove $ markers
-          .trim();
-        
-        katex.render(cleanLatex, eqBox, { 
-          throwOnError: false, 
-          displayMode: true,
-          trust: true
-        });
-      } else {
+    
+    // Check if content is a diagram/non-math description (not LaTeX)
+    const isNonMath = /^(DIAGRAM|GEOMETRY|PROBLEM|TABLE|Components|Flow):/i.test(data.latex);
+    
+    if (isNonMath) {
+      // Show as formatted text, not LaTeX
+      eqBox.style.fontSize = '14px';
+      eqBox.style.textAlign = 'left';
+      eqBox.style.whiteSpace = 'pre-wrap';
+      eqBox.textContent = data.latex;
+    } else {
+      // Try to render as LaTeX
+      eqBox.style.fontSize = '';
+      eqBox.style.textAlign = '';
+      eqBox.style.whiteSpace = '';
+      
+      try {
+        if (window.katex && data.latex) {
+          // Clean up common issues in LaTeX
+          let cleanLatex = data.latex
+            .replace(/\\\\/g, '\\')  // Fix double backslashes
+            .replace(/\$\$/g, '')    // Remove $$ markers if present
+            .replace(/^\$|\$$/g, '') // Remove $ markers
+            // Convert unsupported commands to supported alternatives
+            .replace(/\\enclose\{longdiv\}\{(\d+)\}/g, '$1 \\div ')  // Long division
+            .replace(/\\enclose\{[^}]+\}\{([^}]+)\}/g, '$1')  // Other enclose commands
+            .replace(/\\longdiv\{(\d+)\}/g, '$1 \\div ')  // Alternative long division
+            .trim();
+          
+          katex.render(cleanLatex, eqBox, { 
+            throwOnError: false, 
+            displayMode: true,
+            trust: true
+          });
+        } else {
+          eqBox.textContent = data.latex;
+        }
+      } catch (katexErr) {
+        // Fallback: show the raw LaTeX in a readable format
         eqBox.textContent = data.latex;
       }
-    } catch (katexErr) {
-      // Fallback: show the raw LaTeX in a readable format
-      eqBox.textContent = data.latex;
     }
 
     contentBox.textContent = data.content;
