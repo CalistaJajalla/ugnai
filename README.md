@@ -4,7 +4,7 @@ An AI communication tool for Filipino public school teachers.
 
 Write your notes once. UGNai handles the rest.
 
-Try it: **[ugnai.vercel.app](https://ugnai.vercel.app)** (no account needed - just open the link)
+Try it: **[ugnai.vercel.app](https://ugnai-d5eb.vercel.app/)**
 
 ---
 
@@ -20,7 +20,7 @@ UGNai takes your notes and reformats them for each audience in seconds. You revi
 
 **Just open the website.** No login, no account, no installation required.
 
-The app runs on Vercel. When you open the link, you see the full app with all features. Your API keys are stored securely on the server - users never need their own.
+The app runs on Vercel. When you open the link, you see the full app with all features.
 
 ---
 
