@@ -2,9 +2,6 @@
 // Math mode: reads equation from image or text, returns LaTeX + explanation
 // Uses Groq Vision for image input, Groq text for explanation generation
 
-// KEY SETUP - supports up to 10 API keys for load balancing
-// Keys: GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3, etc.
-
 let mathKeyIndex = 0; // Round-robin counter for math API
 
 function getKeys() {
