@@ -212,7 +212,7 @@
 
         <!-- VOICE AND CAMERA BUTTONS -->
         <div class="input-tools">
-          <button class="tool-btn" id="voice-btn" title="I-record ang iyong tala">
+          <button class="tool-btn" id="voice-btn" title="Voice input - works best with English. Filipino/Tagalog may have limited accuracy.">
             <svg width="15" height="15"><use href="#i-mic"/></svg>
             <span id="voice-label">Magsalita</span>
           </button>
@@ -264,6 +264,13 @@
               Litrato
             </button>
             <input type="file" id="math-camera-input" accept="image/*" capture="environment" style="display:none"/>
+          </div>
+          
+          <!-- Image loaded indicator -->
+          <div id="math-image-loaded" class="math-image-indicator hidden">
+            <svg width="12" height="12"><use href="#i-check"/></svg>
+            <span>Image loaded - switch modes to regenerate</span>
+            <button class="clear-image-btn" id="math-clear-image">Clear</button>
           </div>
 
           <div class="math-mode-row">
@@ -330,8 +337,8 @@
           <div class="grp">
             <div class="grp-lbl">Wika</div>
             <div class="pills" id="lang-pills">
-              <button class="pill on" data-v="Filipino">Filipino</button>
-              <button class="pill" data-v="English">English</button>
+              <button class="pill on" data-v="English">English</button>
+              <button class="pill" data-v="Filipino">Filipino</button>
               <button class="pill" data-v="Taglish">Taglish</button>
             </div>
           </div>

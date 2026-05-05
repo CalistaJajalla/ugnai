@@ -2,9 +2,14 @@
 // Math mode: reads equation from image or text, returns LaTeX + explanation
 // Uses Groq Vision for image input, Groq text for explanation generation
 
+// KEY SETUP - supports up to 10 API keys for load balancing
+// Keys: GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3, etc.
+
+let mathKeyIndex = 0; // Round-robin counter for math API
+
 function getKeys() {
   const keys = [];
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 10; i++) {
     const suffix = i === 1 ? '' : `_${i}`;
     const k = process.env[`GROQ_API_KEY${suffix}`];
     if (k) keys.push(k);
@@ -12,8 +17,14 @@ function getKeys() {
   return keys;
 }
 
+// Round-robin key selection - distributes load evenly
 function pickKey(keys) {
-  return keys[Math.floor(Math.random() * keys.length)];
+  if (keys.length === 0) return null;
+  if (keys.length === 1) return keys[0];
+  
+  const key = keys[mathKeyIndex % keys.length];
+  mathKeyIndex++;
+  return key;
 }
 
 // Detect complexity level of the equation to adjust prompting
@@ -51,22 +62,41 @@ async function extractMathFromImage(apiKey, base64Image, mimeType) {
           },
           {
             type: 'text',
-            text: `Extract all mathematical equations or expressions from this image.
+            text: `Extract the mathematical or educational content from this image.
 
-IMPORTANT:
-- If you cannot see any math equation clearly, respond with exactly: NO_EQUATION_FOUND
-- If the image is blurry, unclear, or doesn't contain math, respond with: NO_EQUATION_FOUND
-- Only return LaTeX if you can clearly see a mathematical expression
+CRITICAL: Return ONLY the extracted content. NO explanations. NO steps. NO descriptions of what you're doing.
 
-If you CAN see equations:
-- Return them as LaTeX notation only
-- If there are multiple equations, put each on its own line
-- Do not include any explanation or text — only the LaTeX
+TYPES OF CONTENT TO EXTRACT:
+
+1. MATH EQUATIONS - Return as LaTeX:
+   Example input: image of "x² + 3x = 4"
+   Return: x^2 + 3x = 4
+
+2. FORMULA SHEETS - Return each formula on its own line:
+   Example: (a+b)^2 = a^2 + 2ab + b^2
+            (a-b)^2 = a^2 - 2ab + b^2
+
+3. EDUCATIONAL DIAGRAMS (flowcharts, models, processes):
+   Return: DIAGRAM: [name/type]
+   Components: [list each element]
+   Flow: [describe the process]
+   
+4. GEOMETRIC FIGURES:
+   Return: GEOMETRY: [shape] with [measurements/labels]
+
+5. WORD PROBLEMS:
+   Return: PROBLEM: [copy the exact text]
+
+6. CHARTS/TABLES:
+   Return: TABLE: [describe structure and data]
+
+RULES:
+- NO markdown headers (no ## or #)
+- NO step-by-step reasoning
+- NO "Let me analyze" or "The image shows"
+- Just the raw content extracted
 - Use \\frac{a}{b} for fractions
-
-Example output format:
-x^2 + 3x - 4 = 0
-\\frac{1}{2} + \\frac{1}{3} = \\frac{5}{6}`,
+- If truly nothing found: NO_CONTENT_FOUND`,
           },
         ],
       }],
@@ -77,12 +107,21 @@ x^2 + 3x - 4 = 0
   const data = await response.json();
   const result = data.choices?.[0]?.message?.content?.trim() || '';
   
-  // Check if model couldn't detect an equation
-  if (!result || result.includes('NO_EQUATION_FOUND') || result.toLowerCase().includes('no equation') || result.toLowerCase().includes('cannot see') || result.toLowerCase().includes('not visible')) {
-    throw new Error('Hindi makita ang equation sa larawan. Subukan kumuha ng mas malinaw na litrato.');
+  // Check if model couldn't detect content
+  if (!result || result.includes('NO_CONTENT_FOUND') || result.includes('NO_EQUATION_FOUND') || result.toLowerCase().includes('cannot see') || result.toLowerCase().includes('not visible')) {
+    throw new Error('Hindi makita ang content sa larawan. Subukan kumuha ng mas malinaw na litrato.');
   }
   
-  return result;
+  // Clean up any markdown formatting the model might have added
+  let cleaned = result
+    .replace(/^##?\s+.+$/gm, '')  // Remove markdown headers
+    .replace(/^\*\*.+\*\*$/gm, '') // Remove bold lines
+    .replace(/^Step \d+:.+$/gm, '') // Remove "Step N:" lines
+    .replace(/^The (image|picture|diagram).+$/gim, '') // Remove "The image shows..."
+    .replace(/\n{3,}/g, '\n\n')  // Collapse multiple newlines
+    .trim();
+  
+  return cleaned || result;
 }
 
 // Step 2: Extract LaTeX from plain text input

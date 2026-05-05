@@ -6,7 +6,7 @@
 const S = {
   audience: 'parents',
   format:   'letter',
-  language: 'Filipino',
+  language: 'English',
   tone:     'warm',
   output:   '',
   batch:    {},
@@ -613,18 +613,18 @@ Output the reformatted draft only. No explanation, no intro sentence, no meta-co
 }
 
 // API CALL via proxy
-async function callAPI(prompt, keyHint = 0) {
+async function callAPI(prompt, keyHint = 0, language = 'English') {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const WAITS = [0, 1500, 2500, 4000];
-
+  
   for (let attempt = 0; attempt < WAITS.length; attempt++) {
-    if (WAITS[attempt] > 0) await sleep(WAITS[attempt]);
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, keyHint: keyHint + attempt }),
-      });
+  if (WAITS[attempt] > 0) await sleep(WAITS[attempt]);
+  try {
+  const res = await fetch('/api/generate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ prompt, keyHint: keyHint + attempt, language }),
+  });
 
       // Always retry on 429 or 5xx
       if (res.status === 429 || res.status >= 500) continue;
@@ -672,9 +672,9 @@ async function genSingle() {
   document.getElementById('out-text').innerHTML =
     `<div class="out-empty" style="font-style:normal;color:var(--ink3)">${t('waiting_output')}</div>`;
 
-  try {
-    const result = await callAPI(buildPrompt(input, S.audience, S.format, S.language, S.tone));
-    S.output = result;
+try {
+const result = await callAPI(buildPrompt(input, S.audience, S.format, S.language, S.tone), 0, S.language);
+S.output = result;
     document.getElementById('out-text').textContent = result;
     saveHist({ input, output: result, audience: S.audience, format: S.format, language: S.language, tone: S.tone });
   } catch (err) {
@@ -704,20 +704,31 @@ async function genBatch() {
   auds.forEach(a => { document.getElementById(`b-${a}`).textContent = t('processing'); });
 
   try {
-    // Sequential with 1.2s delay between calls - avoids rate limits on free tier keys
+    // Run in pairs (2 at a time) to use both API keys while avoiding rate limits
     const delay = ms => new Promise(r => setTimeout(r, ms));
-    for (let i = 0; i < auds.length; i++) {
-      const a = auds[i];
-      document.getElementById(`b-${a}`).textContent = t('processing');
-      try {
-        const result = await callAPI(buildPrompt(input, a, fmts[a], S.language, S.tone), i);
-        S.batch[a] = result;
-        document.getElementById(`b-${a}`).textContent = result;
-      } catch (e) {
-        S.batch[a] = `${t('failed')} ${e.message}`;
-        document.getElementById(`b-${a}`).textContent = `${t('failed')} ${e.message}`;
-      }
-      if (i < auds.length - 1) await delay(1500);
+    
+    // Process in batches of 2 for better performance
+    for (let i = 0; i < auds.length; i += 2) {
+      const batch = auds.slice(i, i + 2);
+      
+      // Run pair in parallel
+      const promises = batch.map((a, idx) => {
+        document.getElementById(`b-${a}`).textContent = t('processing');
+        return callAPI(buildPrompt(input, a, fmts[a], S.language, S.tone), i + idx, S.language)
+          .then(result => {
+            S.batch[a] = result;
+            document.getElementById(`b-${a}`).textContent = result;
+          })
+          .catch(e => {
+            S.batch[a] = `${t('failed')} ${e.message}`;
+            document.getElementById(`b-${a}`).textContent = `${t('failed')} ${e.message}`;
+          });
+      });
+      
+      await Promise.all(promises);
+      
+      // Small delay before next pair to avoid rate limits
+      if (i + 2 < auds.length) await delay(1000);
     }
     saveHist({ input, output: '[Batch] Para sa lahat generated', batchOutputs: { ...S.batch }, audience: 'batch', format: 'batch', language: S.language, tone: S.tone });
   } catch (e) {
@@ -1279,6 +1290,8 @@ document.getElementById('speak-btn')?.addEventListener('click', speakOutput);
 
 // MATH MODE
 let mathMode = 'explanation';
+let lastMathImage = null;  // Persist uploaded image for mode switching
+let lastMathImageType = null;
 
 function initMathMode() {
   const toggleBtn = document.getElementById('math-toggle');
@@ -1306,12 +1319,17 @@ function initMathMode() {
     toggleBtn?.classList.remove('on');
   });
 
-  // Mode buttons
+  // Mode buttons - allow regenerating with same image
   document.querySelectorAll('.math-mode-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       document.querySelectorAll('.math-mode-btn').forEach(b => b.classList.remove('on'));
       btn.classList.add('on');
       mathMode = btn.dataset.mode;
+      
+      // If we have a stored image, auto-regenerate with new mode
+      if (lastMathImage) {
+        await runMathGenerateWithData(lastMathImage, lastMathImageType, null);
+      }
     });
   });
 
@@ -1341,9 +1359,13 @@ function initMathMode() {
     panel.classList.add('hidden');
     toggleBtn?.classList.remove('on');
   });
+  
+  // Clear image button
+  document.getElementById('math-clear-image')?.addEventListener('click', clearMathImage);
 }
 
-async function runMathGenerate(imageFile, textInput) {
+// Core math generation with raw data
+async function runMathGenerateWithData(base64Image, mimeType, textInput) {
   const genBtn = document.getElementById('math-generate-btn');
   const lbl = document.getElementById('math-gen-lbl');
   const spn = document.getElementById('math-gen-spin');
@@ -1363,9 +1385,9 @@ async function runMathGenerate(imageFile, textInput) {
       mode: mathMode,
     };
 
-    if (imageFile) {
-      body.image = await fileToBase64(imageFile);
-      body.mimeType = imageFile.type || 'image/jpeg';
+    if (base64Image) {
+      body.image = base64Image;
+      body.mimeType = mimeType || 'image/jpeg';
     } else {
       body.text = textInput;
     }
@@ -1428,6 +1450,41 @@ async function runMathGenerate(imageFile, textInput) {
     lbl.classList.remove('hidden');
     spn.classList.add('hidden');
   }
+}
+
+// Show/hide image indicator
+function updateImageIndicator() {
+  const indicator = document.getElementById('math-image-loaded');
+  if (indicator) {
+    indicator.classList.toggle('hidden', !lastMathImage);
+  }
+}
+
+// Wrapper for file input - stores image for reuse
+async function runMathGenerate(imageFile, textInput) {
+  if (imageFile) {
+    const base64 = await fileToBase64(imageFile);
+    const mimeType = imageFile.type || 'image/jpeg';
+    // Store for mode switching
+    lastMathImage = base64;
+    lastMathImageType = mimeType;
+    updateImageIndicator();
+    await runMathGenerateWithData(base64, mimeType, null);
+  } else {
+    // Text input - clear stored image
+    lastMathImage = null;
+    lastMathImageType = null;
+    updateImageIndicator();
+    await runMathGenerateWithData(null, null, textInput);
+  }
+}
+
+// Clear stored image
+function clearMathImage() {
+  lastMathImage = null;
+  lastMathImageType = null;
+  updateImageIndicator();
+  document.getElementById('math-result')?.classList.add('hidden');
 }
 
 // INIT
