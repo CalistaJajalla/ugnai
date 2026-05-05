@@ -51,22 +51,39 @@ async function extractMathFromImage(apiKey, base64Image, mimeType) {
           },
           {
             type: 'text',
-            text: `Extract all mathematical equations or expressions from this image.
+            text: `Analyze this image for mathematical content.
+
+WHAT TO LOOK FOR:
+1. Written equations or expressions (handwritten or printed)
+2. Geometric diagrams with measurements, angles, or labeled parts
+3. Graphs with functions or data points
+4. Tables with numbers
+5. Word problems with embedded math
 
 IMPORTANT:
-- If you cannot see any math equation clearly, respond with exactly: NO_EQUATION_FOUND
-- If the image is blurry, unclear, or doesn't contain math, respond with: NO_EQUATION_FOUND
-- Only return LaTeX if you can clearly see a mathematical expression
+- If you cannot find ANY mathematical content, respond with exactly: NO_EQUATION_FOUND
+- If the image is too blurry to read, respond with: NO_EQUATION_FOUND
 
-If you CAN see equations:
-- Return them as LaTeX notation only
-- If there are multiple equations, put each on its own line
-- Do not include any explanation or text — only the LaTeX
+FOR EQUATIONS/EXPRESSIONS:
+- Return them as LaTeX notation
 - Use \\frac{a}{b} for fractions
 
-Example output format:
+FOR DIAGRAMS:
+- Describe the shape (triangle, circle, rectangle, etc.)
+- Include all measurements, angles, or labels you can see
+- Format as: "Diagram: [description] with [measurements]"
+
+FOR GRAPHS:
+- Identify the function type if possible
+- Note any labeled points or axis values
+
+Return the LaTeX or description. If there are multiple items, put each on its own line.
+
+Example outputs:
 x^2 + 3x - 4 = 0
-\\frac{1}{2} + \\frac{1}{3} = \\frac{5}{6}`,
+Diagram: right triangle with sides a=3, b=4, hypotenuse c
+\\frac{1}{2} + \\frac{1}{3} = \\frac{5}{6}
+Graph: parabola y = x^2 passing through (0,0)`,
           },
         ],
       }],

@@ -52,64 +52,74 @@ function sanitize(text) {
   return clean.trim();
 }
 
-// SYSTEM PROMPT
-const SYSTEM_PROMPT = `You are a formatting assistant for Filipino public school teachers.
+// SYSTEM PROMPT BUILDER - handles language setting
+function buildSystemPrompt(language) {
+  const languageInstructions = {
+    'English': `LANGUAGE RULE - CRITICAL:
+Write ENTIRELY in English. Do not use any Filipino/Tagalog words.
+The only exception: Filipino proper nouns (names of people, places) may stay as-is.
+Do NOT write: "Magandang araw", "po", "Salamat", "kailangan", "walang pasok", etc.
+Write: "Good day", "Thank you", "need", "no classes", etc.`,
+    
+    'Filipino': `LANGUAGE RULE:
+Write in Filipino/Tagalog.
+Technical English terms (Science, Math, quiz, seminar, project) stay in English.
+Everything else in Filipino.`,
+    
+    'Taglish': `LANGUAGE RULE:
+Write in Taglish - a natural mix of Tagalog and English as spoken in the Philippines.
+Use English for technical terms, common expressions, and where it flows naturally.
+Mix both languages naturally as Filipinos do in everyday conversation.`,
+  };
+
+  return `You are a formatting assistant for Filipino public school teachers.
 
 YOUR ONLY JOB: Reformat the teacher's notes for a specific audience. Nothing else.
+
+${languageInstructions[language] || languageInstructions['English']}
 
 FORMATTING:
 Plain text only. No markdown, no asterisks, no bold, no dashes as bullets. Blank line between paragraphs.
 
-STUDY THESE EXAMPLES. Produce output that matches this style exactly.
+STUDY THESE EXAMPLES (adapt to the requested language).
 
-FOR PARENTS:
+FOR PARENTS (Filipino example):
 Input: walang pasok friday, teacher seminar
-Output:
-Magandang araw po! Nais kong ipaalam na walang pasok sa Biyernes dahil may seminar kaming mga guro. Babalik na po sila sa Lunes. Salamat po!
+Filipino Output: Magandang araw po! Nais kong ipaalam na walang pasok sa Biyernes dahil may seminar kaming mga guro. Babalik na po sila sa Lunes. Salamat po!
+English Output: Good day! I would like to inform you that there will be no classes on Friday due to a teacher seminar. Classes will resume on Monday. Thank you!
 
-Input: science experiment monday, kailangan magdala ng empty plastic bottle vinegar baking soda, mag-wear lumang damit, sa labas gagawin
-Output:
-Magandang araw po! Magkakaroon po ng Science experiment ang klase sa susunod na Lunes. Kailangang maghanda ng mga sumusunod: 1 empty plastic bottle, suka, at baking soda. Paki paalala din na magsuot ng lumang damit ang inyong anak dahil magiging marumi ang aktibidad. Sa labas ito gagawin. Salamat po!
-
-FOR STUDENTS:
+FOR STUDENTS (Filipino example):
 Input: walang pasok friday, teacher seminar
-Output:
-Walang pasok tayo this Friday dahil may seminar kami. Babalik na tayo sa Monday.
-
-Input: science experiment monday, kailangan magdala ng empty plastic bottle vinegar baking soda, mag-wear lumang damit, sa labas gagawin
-Output:
-Mayroon tayong Science experiment next Monday. Kailangan ninyong magdala ng: 1 empty plastic bottle, suka, at baking soda. Magsuot ng lumang damit dahil magiging marumi ang aktibidad. Sa labas tayo gagawa.
+Filipino Output: Walang pasok tayo this Friday dahil may seminar kami. Babalik na tayo sa Monday.
+English Output: No classes this Friday because we have a seminar. We will be back on Monday.
 
 FOR DEPED/ADMIN:
 Input: walang pasok friday, teacher seminar
-Output:
-Nais ipaalam na ang mga klase ay suspendido sa Biyernes, [petsa], dahil sa nakatakdang seminar ng mga guro. Ang regular na klase ay magpapatuloy sa Lunes, [petsa].
+Filipino Output: Nais ipaalam na ang mga klase ay suspendido sa Biyernes, [date], dahil sa nakatakdang seminar ng mga guro. Ang regular na klase ay magpapatuloy sa Lunes, [date].
+English Output: This is to inform that classes are suspended on Friday, [date], due to the scheduled teacher seminar. Regular classes will resume on Monday, [date].
 
 FOR PRINCIPAL:
 Input: walang pasok friday, teacher seminar
-Output:
-Magandang araw po. Nais ko pong ipaalam na walang klase sa aming baitang ngayong Biyernes dahil sa seminar ng mga guro. Babalik na po kami sa regular na iskedyul sa Lunes. Salamat po.
+Filipino Output: Magandang araw po. Nais ko pong ipaalam na walang klase sa aming baitang ngayong Biyernes dahil sa seminar ng mga guro. Babalik na po kami sa regular na iskedyul sa Lunes. Salamat po.
+English Output: Good day. I would like to inform you that there will be no classes in our grade level this Friday due to the teacher seminar. We will resume our regular schedule on Monday. Thank you.
 
 RULES FOR PARENTS AND STUDENTS:
-Never start with "Mahal naming mga magulang" or "Mga estudyante" or similar formal openers.
-Use "Magandang araw po!" for parents, or go straight to the message.
-For students, go straight to the information. No greeting needed.
-Never write "ha" at the end of sentences.
-End parent messages with "Salamat po!" only.
-End student messages with nothing or one short sentence.
-
-RULES FOR ENGLISH WORDS:
-Science, Math, experiment, quiz, seminar, schedule, report, project, reminder stay in English.
-Everything else stays in Filipino: walang pasok, lumang damit, sa labas, mayroon, kailangan.
-Never add English words not in the teacher's original notes.
+Never start with overly formal openers like "Dear Parents" or "Mahal naming mga magulang".
+Keep it warm but concise.
+For students, go straight to the information.
 
 CONTENT RULES:
 Never add facts or details not in the teacher's notes.
-Missing information gets a [punan] placeholder.
+Missing information gets a [fill in] or [punan] placeholder.
 Output the reformatted text only. Nothing before or after it.`;
+}
+
+// Keep old constant for backwards compatibility but it's not used
+const SYSTEM_PROMPT = buildSystemPrompt('Filipino');
 
 // GROQ API CALL
-async function callGroq(apiKey, userPrompt) {
+async function callGroq(apiKey, userPrompt, language) {
+  const systemPrompt = buildSystemPrompt(language || 'English');
   return fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -120,7 +130,7 @@ async function callGroq(apiKey, userPrompt) {
       model: 'llama-3.3-70b-versatile',
       max_tokens: 800,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
     }),
@@ -133,7 +143,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { prompt, keyHint } = req.body;
+  const { prompt, keyHint, language } = req.body;
 
   if (!prompt || typeof prompt !== 'string') {
     return res.status(400).json({ error: 'Walang laman ang input.' });
@@ -159,7 +169,7 @@ export default async function handler(req, res) {
 
   for (const { key } of ordered) {
     try {
-      const response = await callGroq(key, safePrompt);
+      const response = await callGroq(key, safePrompt, language);
 
       if (response.status === 429) {
         continue;
