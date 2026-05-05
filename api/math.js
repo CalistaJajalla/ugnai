@@ -51,39 +51,41 @@ async function extractMathFromImage(apiKey, base64Image, mimeType) {
           },
           {
             type: 'text',
-            text: `Analyze this image for mathematical content.
+            text: `Extract the mathematical or educational content from this image.
 
-WHAT TO LOOK FOR:
-1. Written equations or expressions (handwritten or printed)
-2. Geometric diagrams with measurements, angles, or labeled parts
-3. Graphs with functions or data points
-4. Tables with numbers
-5. Word problems with embedded math
+CRITICAL: Return ONLY the extracted content. NO explanations. NO steps. NO descriptions of what you're doing.
 
-IMPORTANT:
-- If you cannot find ANY mathematical content, respond with exactly: NO_EQUATION_FOUND
-- If the image is too blurry to read, respond with: NO_EQUATION_FOUND
+TYPES OF CONTENT TO EXTRACT:
 
-FOR EQUATIONS/EXPRESSIONS:
-- Return them as LaTeX notation
+1. MATH EQUATIONS - Return as LaTeX:
+   Example input: image of "x² + 3x = 4"
+   Return: x^2 + 3x = 4
+
+2. FORMULA SHEETS - Return each formula on its own line:
+   Example: (a+b)^2 = a^2 + 2ab + b^2
+            (a-b)^2 = a^2 - 2ab + b^2
+
+3. EDUCATIONAL DIAGRAMS (flowcharts, models, processes):
+   Return: DIAGRAM: [name/type]
+   Components: [list each element]
+   Flow: [describe the process]
+   
+4. GEOMETRIC FIGURES:
+   Return: GEOMETRY: [shape] with [measurements/labels]
+
+5. WORD PROBLEMS:
+   Return: PROBLEM: [copy the exact text]
+
+6. CHARTS/TABLES:
+   Return: TABLE: [describe structure and data]
+
+RULES:
+- NO markdown headers (no ## or #)
+- NO step-by-step reasoning
+- NO "Let me analyze" or "The image shows"
+- Just the raw content extracted
 - Use \\frac{a}{b} for fractions
-
-FOR DIAGRAMS:
-- Describe the shape (triangle, circle, rectangle, etc.)
-- Include all measurements, angles, or labels you can see
-- Format as: "Diagram: [description] with [measurements]"
-
-FOR GRAPHS:
-- Identify the function type if possible
-- Note any labeled points or axis values
-
-Return the LaTeX or description. If there are multiple items, put each on its own line.
-
-Example outputs:
-x^2 + 3x - 4 = 0
-Diagram: right triangle with sides a=3, b=4, hypotenuse c
-\\frac{1}{2} + \\frac{1}{3} = \\frac{5}{6}
-Graph: parabola y = x^2 passing through (0,0)`,
+- If truly nothing found: NO_CONTENT_FOUND`,
           },
         ],
       }],
@@ -94,10 +96,21 @@ Graph: parabola y = x^2 passing through (0,0)`,
   const data = await response.json();
   const result = data.choices?.[0]?.message?.content?.trim() || '';
   
-  // Check if model couldn't detect an equation
-  if (!result || result.includes('NO_EQUATION_FOUND') || result.toLowerCase().includes('no equation') || result.toLowerCase().includes('cannot see') || result.toLowerCase().includes('not visible')) {
-    throw new Error('Hindi makita ang equation sa larawan. Subukan kumuha ng mas malinaw na litrato.');
+  // Check if model couldn't detect content
+  if (!result || result.includes('NO_CONTENT_FOUND') || result.includes('NO_EQUATION_FOUND') || result.toLowerCase().includes('cannot see') || result.toLowerCase().includes('not visible')) {
+    throw new Error('Hindi makita ang content sa larawan. Subukan kumuha ng mas malinaw na litrato.');
   }
+  
+  // Clean up any markdown formatting the model might have added
+  let cleaned = result
+    .replace(/^##?\s+.+$/gm, '')  // Remove markdown headers
+    .replace(/^\*\*.+\*\*$/gm, '') // Remove bold lines
+    .replace(/^Step \d+:.+$/gm, '') // Remove "Step N:" lines
+    .replace(/^The (image|picture|diagram).+$/gim, '') // Remove "The image shows..."
+    .replace(/\n{3,}/g, '\n\n')  // Collapse multiple newlines
+    .trim();
+  
+  return cleaned || result;
   
   return result;
 }

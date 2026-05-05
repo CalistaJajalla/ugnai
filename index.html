@@ -265,6 +265,13 @@
             </button>
             <input type="file" id="math-camera-input" accept="image/*" capture="environment" style="display:none"/>
           </div>
+          
+          <!-- Image loaded indicator -->
+          <div id="math-image-loaded" class="math-image-indicator hidden">
+            <svg width="12" height="12"><use href="#i-check"/></svg>
+            <span>Image loaded - switch modes to regenerate</span>
+            <button class="clear-image-btn" id="math-clear-image">Clear</button>
+          </div>
 
           <div class="math-mode-row">
             <button class="math-mode-btn on" data-mode="explanation">Explanation</button>

@@ -1290,6 +1290,8 @@ document.getElementById('speak-btn')?.addEventListener('click', speakOutput);
 
 // MATH MODE
 let mathMode = 'explanation';
+let lastMathImage = null;  // Persist uploaded image for mode switching
+let lastMathImageType = null;
 
 function initMathMode() {
   const toggleBtn = document.getElementById('math-toggle');
@@ -1317,12 +1319,17 @@ function initMathMode() {
     toggleBtn?.classList.remove('on');
   });
 
-  // Mode buttons
+  // Mode buttons - allow regenerating with same image
   document.querySelectorAll('.math-mode-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       document.querySelectorAll('.math-mode-btn').forEach(b => b.classList.remove('on'));
       btn.classList.add('on');
       mathMode = btn.dataset.mode;
+      
+      // If we have a stored image, auto-regenerate with new mode
+      if (lastMathImage) {
+        await runMathGenerateWithData(lastMathImage, lastMathImageType, null);
+      }
     });
   });
 
@@ -1352,9 +1359,13 @@ function initMathMode() {
     panel.classList.add('hidden');
     toggleBtn?.classList.remove('on');
   });
+  
+  // Clear image button
+  document.getElementById('math-clear-image')?.addEventListener('click', clearMathImage);
 }
 
-async function runMathGenerate(imageFile, textInput) {
+// Core math generation with raw data
+async function runMathGenerateWithData(base64Image, mimeType, textInput) {
   const genBtn = document.getElementById('math-generate-btn');
   const lbl = document.getElementById('math-gen-lbl');
   const spn = document.getElementById('math-gen-spin');
@@ -1374,9 +1385,9 @@ async function runMathGenerate(imageFile, textInput) {
       mode: mathMode,
     };
 
-    if (imageFile) {
-      body.image = await fileToBase64(imageFile);
-      body.mimeType = imageFile.type || 'image/jpeg';
+    if (base64Image) {
+      body.image = base64Image;
+      body.mimeType = mimeType || 'image/jpeg';
     } else {
       body.text = textInput;
     }
@@ -1439,6 +1450,41 @@ async function runMathGenerate(imageFile, textInput) {
     lbl.classList.remove('hidden');
     spn.classList.add('hidden');
   }
+}
+
+// Show/hide image indicator
+function updateImageIndicator() {
+  const indicator = document.getElementById('math-image-loaded');
+  if (indicator) {
+    indicator.classList.toggle('hidden', !lastMathImage);
+  }
+}
+
+// Wrapper for file input - stores image for reuse
+async function runMathGenerate(imageFile, textInput) {
+  if (imageFile) {
+    const base64 = await fileToBase64(imageFile);
+    const mimeType = imageFile.type || 'image/jpeg';
+    // Store for mode switching
+    lastMathImage = base64;
+    lastMathImageType = mimeType;
+    updateImageIndicator();
+    await runMathGenerateWithData(base64, mimeType, null);
+  } else {
+    // Text input - clear stored image
+    lastMathImage = null;
+    lastMathImageType = null;
+    updateImageIndicator();
+    await runMathGenerateWithData(null, null, textInput);
+  }
+}
+
+// Clear stored image
+function clearMathImage() {
+  lastMathImage = null;
+  lastMathImageType = null;
+  updateImageIndicator();
+  document.getElementById('math-result')?.classList.add('hidden');
 }
 
 // INIT
