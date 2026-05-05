@@ -4,7 +4,7 @@ An AI communication tool for Filipino public school teachers.
 
 Write your notes once. UGNai handles the rest.
 
-Try it: **[ugnai-d5eb.vercel.app](https://ugnai-d5eb.vercel.app)**
+Try it: **[ugnai.vercel.app](https://ugnai.vercel.app)** (no account needed - just open the link)
 
 ---
 
@@ -16,15 +16,45 @@ UGNai takes your notes and reformats them for each audience in seconds. You revi
 
 ---
 
+## How to access
+
+**Just open the website.** No login, no account, no installation required.
+
+The app runs on Vercel. When you open the link, you see the full app with all features. Your API keys are stored securely on the server - users never need their own.
+
+---
+
 ## How to use it
 
-1. Type or paste your notes into the left box. Write however feels natural, any language is fine.
+1. Type or paste your notes into the input box. Write however feels natural, any language is fine.
 2. Pick your audience: Parents, Students, DepEd/Admin, or Principal.
-3. Choose a format and language.
+3. Choose a format and language (English is default).
 4. Click Generate Draft. Your reformatted draft appears on the right.
 5. Review it, copy it, paste it into your own messaging app or email.
 
 To generate all four audience versions at once, click Para sa Lahat.
+
+---
+
+## Math Mode
+
+Math Mode helps teachers create teaching materials from equations. It is NOT a homework solver.
+
+**What it does:**
+- Takes ONE equation (typed or from a photo)
+- Generates either an explanation for teaching OR a Filipino-context word problem
+- Helps you explain concepts to students or create practice problems
+
+**How to use:**
+1. Click the Math Mode button below the text input
+2. Type an equation (e.g., `x^2 + 3x - 4 = 0`) OR take a photo of ONE equation
+3. Choose: Explanation (for teaching) or Word Problem (for practice)
+4. Click Generate
+
+**Important:**
+- One equation at a time. If you have a formula sheet, take separate photos of each formula you want to use.
+- This is for teaching preparation, not for solving student homework.
+- Diagrams and flowcharts (like communication models) are described in text, not rendered as math.
 
 ---
 
