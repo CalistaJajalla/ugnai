@@ -62,41 +62,35 @@ async function extractMathFromImage(apiKey, base64Image, mimeType) {
           },
           {
             type: 'text',
-            text: `Extract the mathematical or educational content from this image.
+            text: `Look at this image and find ONE main math equation or concept to focus on.
 
-CRITICAL: Return ONLY the extracted content. NO explanations. NO steps. NO descriptions of what you're doing.
+IMPORTANT: This is for TEACHING, not solving homework. Pick the most prominent or first equation you see.
 
-TYPES OF CONTENT TO EXTRACT:
+IF THE IMAGE HAS MULTIPLE EQUATIONS (like a formula sheet):
+- Pick just ONE equation - the first, largest, or most prominent
+- Ignore the rest - the teacher will take separate photos if needed
 
-1. MATH EQUATIONS - Return as LaTeX:
-   Example input: image of "x² + 3x = 4"
-   Return: x^2 + 3x = 4
+WHAT TO RETURN:
 
-2. FORMULA SHEETS - Return each formula on its own line:
-   Example: (a+b)^2 = a^2 + 2ab + b^2
-            (a-b)^2 = a^2 - 2ab + b^2
+For a SINGLE EQUATION:
+Return just the LaTeX, nothing else.
+Example: A = \\pi r^2
 
-3. EDUCATIONAL DIAGRAMS (flowcharts, models, processes):
-   Return: DIAGRAM: [name/type]
-   Components: [list each element]
-   Flow: [describe the process]
-   
-4. GEOMETRIC FIGURES:
-   Return: GEOMETRY: [shape] with [measurements/labels]
+For a DIAGRAM (flowchart, communication model, process):
+Return: DIAGRAM: [name]
+[Brief 1-2 sentence description of what it shows]
 
-5. WORD PROBLEMS:
-   Return: PROBLEM: [copy the exact text]
-
-6. CHARTS/TABLES:
-   Return: TABLE: [describe structure and data]
+For a GEOMETRIC FIGURE with labels:
+Return: GEOMETRY: [shape name]
+[The main formula shown, e.g. A = lw]
 
 RULES:
-- NO markdown headers (no ## or #)
-- NO step-by-step reasoning
-- NO "Let me analyze" or "The image shows"
-- Just the raw content extracted
-- Use \\frac{a}{b} for fractions
-- If truly nothing found: NO_CONTENT_FOUND`,
+- Return ONLY the content, no explanations
+- NO markdown (no # or ##)
+- NO "The image shows..." or "Let me..."
+- Use \\frac{a}{b} for fractions, \\pi for pi
+- For division use \\div not \\enclose
+- If nothing found: NO_CONTENT_FOUND`,
           },
         ],
       }],
