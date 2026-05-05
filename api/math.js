@@ -2,9 +2,14 @@
 // Math mode: reads equation from image or text, returns LaTeX + explanation
 // Uses Groq Vision for image input, Groq text for explanation generation
 
+// KEY SETUP - supports up to 10 API keys for load balancing
+// Keys: GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3, etc.
+
+let mathKeyIndex = 0; // Round-robin counter for math API
+
 function getKeys() {
   const keys = [];
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 10; i++) {
     const suffix = i === 1 ? '' : `_${i}`;
     const k = process.env[`GROQ_API_KEY${suffix}`];
     if (k) keys.push(k);
@@ -12,8 +17,14 @@ function getKeys() {
   return keys;
 }
 
+// Round-robin key selection - distributes load evenly
 function pickKey(keys) {
-  return keys[Math.floor(Math.random() * keys.length)];
+  if (keys.length === 0) return null;
+  if (keys.length === 1) return keys[0];
+  
+  const key = keys[mathKeyIndex % keys.length];
+  mathKeyIndex++;
+  return key;
 }
 
 // Detect complexity level of the equation to adjust prompting
@@ -111,8 +122,6 @@ RULES:
     .trim();
   
   return cleaned || result;
-  
-  return result;
 }
 
 // Step 2: Extract LaTeX from plain text input

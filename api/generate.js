@@ -2,11 +2,14 @@
 // UGNai API proxy using Groq
 // Model: llama-3.3-70b -- Currently 2 keys
 
-// KEY SETUP
+// KEY SETUP - supports up to 10 API keys for load balancing
+// Keys: GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3, etc.
+
+let globalKeyIndex = 0; // Round-robin counter
 
 function getKeys() {
   const keys = [];
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 10; i++) {
     const suffix = i === 1 ? '' : `_${i}`;
     const k = process.env[`GROQ_API_KEY${suffix}`];
     if (k) keys.push({ key: k, index: i });
@@ -14,12 +17,22 @@ function getKeys() {
   return keys;
 }
 
+// True round-robin: each call uses the next key in sequence
 function getOrdered(allKeys, keyHint) {
-  if (typeof keyHint === 'number' && allKeys.length > 1) {
-    const start = keyHint % allKeys.length;
-    return [...allKeys.slice(start), ...allKeys.slice(0, start)];
+  if (allKeys.length === 0) return [];
+  if (allKeys.length === 1) return allKeys;
+  
+  // Use keyHint if provided (for parallel batch calls), otherwise use global counter
+  let startIndex;
+  if (typeof keyHint === 'number') {
+    startIndex = keyHint % allKeys.length;
+  } else {
+    startIndex = globalKeyIndex % allKeys.length;
+    globalKeyIndex++;
   }
-  return [...allKeys].sort(() => Math.random() - 0.5);
+  
+  // Return keys starting from the selected index, wrapping around
+  return [...allKeys.slice(startIndex), ...allKeys.slice(0, startIndex)];
 }
 
 // INJECTION DETECTION
