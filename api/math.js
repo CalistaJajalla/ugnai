@@ -52,9 +52,18 @@ async function extractMathFromImage(apiKey, base64Image, mimeType) {
           {
             type: 'text',
             text: `Extract all mathematical equations or expressions from this image.
-Return them as LaTeX notation only.
-If there are multiple equations, put each on its own line.
-Do not include any explanation or text — only the LaTeX.
+
+IMPORTANT:
+- If you cannot see any math equation clearly, respond with exactly: NO_EQUATION_FOUND
+- If the image is blurry, unclear, or doesn't contain math, respond with: NO_EQUATION_FOUND
+- Only return LaTeX if you can clearly see a mathematical expression
+
+If you CAN see equations:
+- Return them as LaTeX notation only
+- If there are multiple equations, put each on its own line
+- Do not include any explanation or text — only the LaTeX
+- Use \\frac{a}{b} for fractions
+
 Example output format:
 x^2 + 3x - 4 = 0
 \\frac{1}{2} + \\frac{1}{3} = \\frac{5}{6}`,
@@ -66,7 +75,14 @@ x^2 + 3x - 4 = 0
 
   if (!response.ok) throw new Error('Hindi nabasa ang equation sa larawan.');
   const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() || '';
+  const result = data.choices?.[0]?.message?.content?.trim() || '';
+  
+  // Check if model couldn't detect an equation
+  if (!result || result.includes('NO_EQUATION_FOUND') || result.toLowerCase().includes('no equation') || result.toLowerCase().includes('cannot see') || result.toLowerCase().includes('not visible')) {
+    throw new Error('Hindi makita ang equation sa larawan. Subukan kumuha ng mas malinaw na litrato.');
+  }
+  
+  return result;
 }
 
 // Step 2: Extract LaTeX from plain text input
@@ -82,7 +98,14 @@ async function extractMathFromText(apiKey, text) {
       max_tokens: 300,
       messages: [{
         role: 'user',
-        content: `Convert this math expression to proper LaTeX notation. Return only the LaTeX, nothing else.
+        content: `Convert this math expression to proper LaTeX notation.
+
+Rules:
+- Use \\frac{a}{b} for fractions (e.g., 1/2 becomes \\frac{1}{2})
+- Use proper superscripts like x^2 or x^{10}
+- Keep the equation clean and readable
+- Return ONLY the LaTeX code, nothing else
+
 Input: ${text}`,
       }],
     }),
@@ -108,7 +131,22 @@ async function generateMathContent(apiKey, latex, audience, language, mode) {
   let taskPrompt;
 
   if (mode === 'word_problem') {
-    if (hasPolynomial) {
+    // Check if equation involves fractions
+    const hasFractions = /\\frac|\//.test(latex);
+    
+    if (hasFractions) {
+      taskPrompt = `Create ONE realistic word problem for Filipino students that involves fractions naturally.
+
+Rules:
+- Use a real Philippine setting (sari-sari store, palengke, school canteen, barangay, cooking, sharing food, etc.)
+- Use Filipino names (e.g. Juan, Maria, Aling Nena, Kuya Ben)
+- The story must involve splitting, sharing, or dividing something into parts
+- For example: sharing pizza/rice/money, measuring ingredients, dividing land/space
+- State what the student needs to find
+- Use simple whole numbers that divide evenly when needed
+- Keep it to 3-5 sentences maximum
+- Do NOT write the equation directly in the problem`;
+    } else if (hasPolynomial) {
       taskPrompt = `Create ONE realistic word problem for Filipino students that naturally leads to this polynomial equation.
 Rules:
 - Use a real Philippine setting (sari-sari store, jeepney, palengke, school canteen, barangay, etc.)
