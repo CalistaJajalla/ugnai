@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: 'ElevenLabs not configured' });
   }
 
-  const { text } = req.body;
+  const { text, language } = req.body;
 
   if (!text || text.length === 0) {
     return res.status(400).json({ error: 'Text is required' });
@@ -23,13 +23,33 @@ export default async function handler(req, res) {
   const maxChars = 2000;
   const truncatedText = text.slice(0, maxChars);
 
+  // Voice selection based on language
+  // You can customize these voice IDs from your ElevenLabs dashboard
+  const voices = {
+    // English: Clear native English voice
+    english: {
+      voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel - clear, professional
+      model: 'eleven_monolingual_v1',   // English-optimized model
+    },
+    // Filipino: Multilingual voice that handles Filipino well
+    filipino: {
+      voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel with multilingual model
+      model: 'eleven_multilingual_v2',  // Supports Filipino/Tagalog
+    },
+    // Taglish: Multilingual voice (handles code-switching)
+    taglish: {
+      voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel with multilingual model
+      model: 'eleven_multilingual_v2',  // Handles mixed languages well
+    },
+  };
+
+  // Default to Filipino/multilingual if language not specified
+  const lang = (language || 'filipino').toLowerCase();
+  const voiceConfig = voices[lang] || voices.filipino;
+
   try {
-    // Using "Rachel" voice - clear, professional female voice
-    // Other good options: "Domi", "Bella", "Antoni", "Josh"
-    const voiceId = '21m00Tcm4TlvDq8ikWAM'; // Rachel
-    
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceConfig.voiceId}`,
       {
         method: 'POST',
         headers: {
@@ -38,7 +58,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           text: truncatedText,
-          model_id: 'eleven_multilingual_v2', // Supports Filipino/Tagalog
+          model_id: voiceConfig.model,
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
