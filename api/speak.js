@@ -23,23 +23,22 @@ export default async function handler(req, res) {
   const maxChars = 2000;
   const truncatedText = text.slice(0, maxChars);
 
-  // Voice selection based on language
-  // You can customize these voice IDs from your ElevenLabs dashboard
+  // Voice: Amaya - English Filipino Narrator
+  // Perfect for English, Filipino, and Taglish
+  const AMAYA_VOICE_ID = '3YMJvGH8HlrOcHJkHNKl';
+  
   const voices = {
-    // English: Clear native English voice
     english: {
-      voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel - clear, professional
-      model: 'eleven_monolingual_v1',   // English-optimized model
+      voiceId: AMAYA_VOICE_ID,
+      model: 'eleven_multilingual_v2',
     },
-    // Filipino: Multilingual voice that handles Filipino well
     filipino: {
-      voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel with multilingual model
-      model: 'eleven_multilingual_v2',  // Supports Filipino/Tagalog
+      voiceId: AMAYA_VOICE_ID,
+      model: 'eleven_multilingual_v2',
     },
-    // Taglish: Multilingual voice (handles code-switching)
     taglish: {
-      voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel with multilingual model
-      model: 'eleven_multilingual_v2',  // Handles mixed languages well
+      voiceId: AMAYA_VOICE_ID,
+      model: 'eleven_multilingual_v2',
     },
   };
 
