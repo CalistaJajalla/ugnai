@@ -1329,7 +1329,7 @@ async function speakOutput() {
     const res = await fetch('/api/speak', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, language: S.language }),
     });
 
     if (!res.ok) {
@@ -1343,7 +1343,7 @@ async function speakOutput() {
     }
 
     const data = await res.json();
-    const audioSrc = `data:${data.mimeType};base64,${data.audio}`;
+    const audioSrc = data.audioUrl; // Already a data URL from API
     currentAudio = new Audio(audioSrc);
     currentAudio.play();
     lbl.textContent = t('stop');
