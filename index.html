@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css?v=20260505"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -171,6 +171,10 @@
               <p class="out-empty-hint">Isulat ang gusto mong iparating sa kanan, piliin ang audience, tapos i-generate.</p>
             </div>
           </div>
+          <div class="out-meta-row">
+            <span id="out-wcount" class="out-wcount"></span>
+            <span id="out-char-warn" class="out-char-warn"></span>
+          </div>
           <div class="fb-row">
             <span>Nakatulong?</span>
             <button class="fb" data-v="up"><svg width="14" height="14"><use href="#i-up"/></svg></button>
@@ -210,7 +214,7 @@
           placeholder="Halimbawa: May quiz kami sa AP next week tungkol sa Pilipinas noong Kastila. Kailangan ng notebook at ballpen. Miyerkules, Abril 30."
           rows="7"></textarea>
 
-        <!-- VOICE AND CAMERA BUTTONS -->
+        <!-- VOICE, CAMERA, AND CLEAR BUTTONS -->
         <div class="input-tools">
           <button class="tool-btn" id="voice-btn" title="Voice input - works best with English. Filipino/Tagalog may have limited accuracy.">
             <svg width="15" height="15"><use href="#i-mic"/></svg>
@@ -219,6 +223,10 @@
           <button class="tool-btn" id="camera-btn" title="Kunan ng litrato ang iyong tala">
             <svg width="15" height="15"><use href="#i-camera"/></svg>
             <span id="camera-label">Kumuha ng Litrato</span>
+          </button>
+          <button class="tool-btn tool-btn-clear" id="clear-notes-btn" title="Burahin lahat">
+            <svg width="15" height="15"><use href="#i-x"/></svg>
+            <span id="clear-label">Burahin</span>
           </button>
           <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" />
         </div>
@@ -404,9 +412,12 @@
 
 </div>
 
+<!-- Toast notification container -->
+<div id="toast" class="toast hidden">Nakopya!</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="app.js"></script>
-<script src="tutorial.js"></script>
+<script src="app.js?v=20260505"></script>
+<script src="tutorial.js?v=20260505"></script>
 <script>
   if ('serviceWorker' in navigator)
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));

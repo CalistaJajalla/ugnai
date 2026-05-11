@@ -426,6 +426,19 @@ document.getElementById('ob-next')?.addEventListener('click', () => {
     document.getElementById('ob-next').textContent = siteLang === 'english' ? 'Got it!' : 'Sige na!';
 });
 
+// TOAST NOTIFICATION
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.remove('hidden');
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.classList.add('hidden'), 300);
+  }, 2000);
+}
+
 // WORD COUNT
 const notesEl = document.getElementById('notes');
 notesEl?.addEventListener('input', () => {
@@ -438,6 +451,41 @@ notesEl?.addEventListener('input', () => {
     msg = `<span class="w-long">${t('word_long')}</span>`;
   document.getElementById('warn').innerHTML = msg;
 });
+
+// CLEAR NOTES BUTTON
+document.getElementById('clear-notes-btn')?.addEventListener('click', () => {
+  if (notesEl && notesEl.value.trim()) {
+    notesEl.value = '';
+    notesEl.dispatchEvent(new Event('input'));
+    notesEl.focus();
+  }
+});
+
+// OUTPUT WORD COUNT + VIBER WARNING
+function updateOutputMeta() {
+  const outWcount = document.getElementById('out-wcount');
+  const outCharWarn = document.getElementById('out-char-warn');
+  if (!outWcount || !outCharWarn) return;
+  
+  if (!S.output) {
+    outWcount.textContent = '';
+    outCharWarn.textContent = '';
+    return;
+  }
+  
+  const words = S.output.trim().split(/\s+/).filter(Boolean).length;
+  const chars = S.output.length;
+  outWcount.textContent = `${words} ${t('word_count')} · ${chars} characters`;
+  
+  // Viber limit is ~1000 characters per message
+  if (chars > 1000) {
+    outCharWarn.textContent = siteLang === 'english' 
+      ? 'Too long for Viber (max 1000 chars)' 
+      : 'Mahaba para sa Viber (max 1000 chars)';
+  } else {
+    outCharWarn.textContent = '';
+  }
+}
 
 // AUDIENCE
 document.querySelectorAll('.aud').forEach(b => {
@@ -676,7 +724,12 @@ try {
 const result = await callAPI(buildPrompt(input, S.audience, S.format, S.language, S.tone), 0, S.language);
 S.output = result;
     document.getElementById('out-text').textContent = result;
+    updateOutputMeta();
     saveHist({ input, output: result, audience: S.audience, format: S.format, language: S.language, tone: S.tone });
+    // Auto-scroll to output on mobile
+    if (window.innerWidth <= 900) {
+      document.getElementById('tut-target-output')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   } catch (err) {
     document.getElementById('out-text').textContent = t('try_again');
   } finally {
@@ -701,7 +754,14 @@ async function genBatch() {
 
   const auds = ['parents','students','deped','principal'];
   const fmts = { parents:'letter', students:'student-summary', deped:'deped-report', principal:'weekly' };
-  auds.forEach(a => { document.getElementById(`b-${a}`).textContent = t('processing'); });
+  
+  // Set all cards to loading state with Filipino message
+  auds.forEach(a => { 
+    const el = document.getElementById(`b-${a}`);
+    const card = el?.closest('.b-card');
+    if (el) el.textContent = siteLang === 'english' ? 'Generating...' : 'Ginagawa...';
+    if (card) card.classList.add('loading');
+  });
 
   try {
     // Run in pairs (2 at a time) to use both API keys while avoiding rate limits
@@ -713,15 +773,18 @@ async function genBatch() {
       
       // Run pair in parallel
       const promises = batch.map((a, idx) => {
-        document.getElementById(`b-${a}`).textContent = t('processing');
+        const el = document.getElementById(`b-${a}`);
+        const card = el?.closest('.b-card');
         return callAPI(buildPrompt(input, a, fmts[a], S.language, S.tone), i + idx, S.language)
           .then(result => {
             S.batch[a] = result;
-            document.getElementById(`b-${a}`).textContent = result;
+            if (el) el.textContent = result;
+            if (card) { card.classList.remove('loading'); card.classList.add('done'); }
           })
           .catch(e => {
             S.batch[a] = `${t('failed')} ${e.message}`;
-            document.getElementById(`b-${a}`).textContent = `${t('failed')} ${e.message}`;
+            if (el) el.textContent = `${t('failed')} ${e.message}`;
+            if (card) card.classList.remove('loading');
           });
       });
       
@@ -731,15 +794,25 @@ async function genBatch() {
       if (i + 2 < auds.length) await delay(1000);
     }
     saveHist({ input, output: '[Batch] Para sa lahat generated', batchOutputs: { ...S.batch }, audience: 'batch', format: 'batch', language: S.language, tone: S.tone });
+    
+    // Auto-scroll to output on mobile
+    if (window.innerWidth <= 900) {
+      document.getElementById('tut-target-output')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   } catch (e) {
-    auds.forEach(a => { document.getElementById(`b-${a}`).textContent = `Error: ${e.message}`; });
+    auds.forEach(a => { 
+      const el = document.getElementById(`b-${a}`);
+      const card = el?.closest('.b-card');
+      if (el) el.textContent = `Error: ${e.message}`;
+      if (card) card.classList.remove('loading');
+    });
   } finally {
     btn.disabled = false; lbl.classList.remove('hidden'); spn.classList.add('hidden');
   }
 }
 document.getElementById('batch-btn')?.addEventListener('click', genBatch);
 
-// BATCH COPY
+// BATCH COPY with checkmark confirmation
 document.querySelectorAll('.bc').forEach(b => {
   b.addEventListener('click', () => {
     const txt = S.batch[b.dataset.t] || '';
@@ -747,7 +820,12 @@ document.querySelectorAll('.bc').forEach(b => {
     navigator.clipboard.writeText(txt).then(() => {
       const orig = b.innerHTML;
       b.innerHTML = `<svg width="12" height="12"><use href="#i-check"/></svg>`;
-      setTimeout(() => { b.innerHTML = orig; }, 1600);
+      b.classList.add('copied');
+      showToast(t('copied'));
+      setTimeout(() => { 
+        b.innerHTML = orig; 
+        b.classList.remove('copied');
+      }, 1600);
     });
   });
 });
@@ -758,6 +836,7 @@ document.getElementById('copy-btn')?.addEventListener('click', () => {
   navigator.clipboard.writeText(S.output).then(() => {
     document.getElementById('copy-lbl').textContent = t('copied');
     document.getElementById('copy-ico').innerHTML = `<use href="#i-check"/>`;
+    showToast(t('copied'));
     setTimeout(() => {
       document.getElementById('copy-lbl').textContent = t('copy');
       document.getElementById('copy-ico').innerHTML = `<use href="#i-copy"/>`;
@@ -941,12 +1020,20 @@ function initVoice() {
 
   if (!SpeechRecognition) {
     if (btn) {
-      btn.title = t('voice_not_available');
+      // Detect Firefox specifically
+      const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+      const browserMsg = isFirefox 
+        ? (siteLang === 'english' 
+            ? 'Voice input is not supported in Firefox.\n\nPlease use Chrome, Edge, or Safari for voice input.' 
+            : 'Hindi suportado ang voice input sa Firefox.\n\nGumamit ng Chrome, Edge, o Safari para sa voice input.')
+        : t('voice_not_available');
+      
+      btn.title = browserMsg;
       btn.disabled = true;
       btn.style.opacity = '0.5';
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        alert(t('voice_not_available'));
+        alert(browserMsg);
       });
     }
     return;
@@ -1221,6 +1308,7 @@ async function speakOutput() {
 
   const btn = document.getElementById('speak-btn');
   const lbl = document.getElementById('speak-lbl');
+  const ico = document.getElementById('speak-ico');
 
   // If already playing, stop it
   if (currentAudio && !currentAudio.paused) {
@@ -1228,11 +1316,14 @@ async function speakOutput() {
     currentAudio.currentTime = 0;
     currentAudio = null;
     lbl.textContent = t('listen');
+    ico.innerHTML = `<use href="#i-speaker"/>`;
     return;
   }
 
   btn.disabled = true;
   lbl.textContent = t('loading_audio');
+  // Show spinner while loading
+  ico.innerHTML = `<svg class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg>`;
 
   try {
     const res = await fetch('/api/speak', {
@@ -1256,9 +1347,11 @@ async function speakOutput() {
     currentAudio = new Audio(audioSrc);
     currentAudio.play();
     lbl.textContent = t('stop');
+    ico.innerHTML = `<use href="#i-speaker"/>`;
 
     currentAudio.onended = () => {
       lbl.textContent = t('listen');
+      ico.innerHTML = `<use href="#i-speaker"/>`;
       currentAudio = null;
     };
 
@@ -1267,6 +1360,7 @@ async function speakOutput() {
     browserSpeak(text);
   } finally {
     btn.disabled = false;
+    ico.innerHTML = `<use href="#i-speaker"/>`;
   }
 }
 

@@ -749,3 +749,163 @@ body {
   font-size: 13px;
   text-align: center;
 }
+
+/* ── TOAST NOTIFICATION ─────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--ink);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: var(--pill);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ── OUTPUT META ROW (word count + Viber warning) ── */
+.out-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.out-wcount {
+  font-size: 11px;
+  color: var(--ink4);
+  font-weight: 600;
+}
+.out-char-warn {
+  font-size: 11px;
+  color: var(--amber);
+  font-weight: 600;
+}
+
+/* ── CLEAR BUTTON STYLE ─────────────────── */
+.tool-btn-clear {
+  color: var(--ink4);
+}
+.tool-btn-clear:hover {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-lt);
+}
+
+/* ── MOBILE BUTTON SIZES (min 44px tap target) ── */
+@media (max-width: 600px) {
+  .tool-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+  .btn-primary, .btn-outline {
+    min-height: 48px;
+    padding: 14px 20px;
+  }
+  .act {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+  /* Smaller empty state on mobile */
+  .out-empty {
+    padding: 30px 15px;
+  }
+  .out-empty-logo {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 8px;
+  }
+  .out-empty p {
+    font-size: 12px;
+  }
+  .out-empty-hint {
+    font-size: 11px;
+  }
+}
+
+/* ── BATCH CARD COPY CONFIRMATION ─────── */
+.bc.copied {
+  background: var(--cyan-lt);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+.bc.copied svg {
+  animation: pop 0.3s ease;
+}
+@keyframes pop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* ── PROGRESS INDICATOR FOR BATCH ─────── */
+.b-card.loading {
+  opacity: 0.7;
+}
+.b-card.loading .b-txt::after {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--line);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: rot 0.6s linear infinite;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.b-card.done {
+  opacity: 1;
+  border-top-color: var(--cyan);
+}
+
+/* ── LANGUAGE PICKER MOBILE ─────────────── */
+@media (max-width: 480px) {
+  .langpick-card {
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .langpick-card h2 {
+    font-size: 16px;
+  }
+  .langpick-card p {
+    font-size: 12px;
+  }
+  .langpick-options {
+    flex-direction: column;
+  }
+  .langpick-btn {
+    width: 100%;
+  }
+}
+
+/* ── TUTORIAL MOBILE FIXES ────────────────── */
+@media (max-width: 480px) {
+  .tut-card {
+    width: calc(100vw - 32px);
+    max-width: 280px;
+    padding: 16px;
+    left: 50% !important;
+    transform: translateX(-50%);
+  }
+  .tut-card h3 {
+    font-size: 14px;
+  }
+  .tut-card p {
+    font-size: 12px;
+  }
+  .tut-spotlight {
+    display: none; /* Hide spotlight on very small screens to prevent overlap */
+  }
+}
