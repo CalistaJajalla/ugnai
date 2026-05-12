@@ -6,11 +6,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.ELEVENLABS_API_KEY;
+  // Check for both possible env var names (ELEVEN_API_KEY or ELEVENLABS_API_KEY)
+  const apiKey = process.env.ELEVEN_API_KEY || process.env.ELEVENLABS_API_KEY;
   
   if (!apiKey) {
     // Return 503 so frontend knows to use browser TTS fallback
-    return res.status(503).json({ error: 'ElevenLabs not configured' });
+    return res.status(503).json({ error: 'ElevenLabs not configured - set ELEVEN_API_KEY env var' });
   }
 
   const { text, language } = req.body;
@@ -70,34 +71,29 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      console.error('[v0] ElevenLabs error:', response.status, error);
+      console.error('ElevenLabs error:', error);
       
       if (response.status === 401) {
-        console.error('[v0] Invalid API key or key has no access');
         return res.status(503).json({ error: 'Invalid API key' });
       }
       if (response.status === 429) {
-        console.error('[v0] Rate limit exceeded');
         return res.status(503).json({ error: 'Rate limit exceeded' });
       }
       
-      console.error('[v0] Other ElevenLabs error - returning 503');
       return res.status(503).json({ error: 'TTS service unavailable' });
     }
 
-    console.log('[v0] ElevenLabs API call succeeded, converting audio');
     // Get audio as buffer
     const audioBuffer = await response.arrayBuffer();
     
     // Return as base64 for easy frontend handling
     const base64Audio = Buffer.from(audioBuffer).toString('base64');
     const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
-    
-    console.log('[v0] Returning audio URL, length:', audioUrl.length);
+
     return res.status(200).json({ audioUrl });
 
   } catch (error) {
-    console.error('[v0] TTS exception error:', error.message);
+    console.error('TTS error:', error);
     return res.status(503).json({ error: 'TTS service error' });
   }
 }
