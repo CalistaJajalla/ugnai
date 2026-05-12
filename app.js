@@ -1335,7 +1335,9 @@ async function speakOutput() {
     if (!res.ok) {
       // ElevenLabs not configured — fall back to browser TTS
       const e = await res.json().catch(() => ({}));
+      console.log('[v0] TTS error:', res.status, e.error);
       if (res.status === 503) {
+        console.log('[v0] Using browser TTS fallback');
         browserSpeak(text);
         return;
       }
@@ -1343,7 +1345,11 @@ async function speakOutput() {
     }
 
     const data = await res.json();
+    console.log('[v0] TTS response:', data);
     const audioSrc = data.audioUrl; // Already a data URL from API
+    if (!audioSrc) {
+      throw new Error('No audio URL returned from API');
+    }
     currentAudio = new Audio(audioSrc);
     currentAudio.play();
     lbl.textContent = t('stop');
