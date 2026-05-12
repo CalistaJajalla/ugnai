@@ -1352,32 +1352,46 @@ async function speakOutput() {
     currentAudio.onended = () => {
       lbl.textContent = t('listen');
       ico.innerHTML = `<use href="#i-speaker"/>`;
+      btn.disabled = false;
       currentAudio = null;
     };
 
   } catch (err) {
-    // Fall back to browser TTS
+    console.log('[v0] ElevenLabs error, falling back to browser TTS:', err.message);
     browserSpeak(text);
   } finally {
     btn.disabled = false;
-    ico.innerHTML = `<use href="#i-speaker"/>`;
   }
 }
 
 function browserSpeak(text) {
   // Browser built-in TTS as fallback when ElevenLabs not available
   const lbl = document.getElementById('speak-lbl');
+  const ico = document.getElementById('speak-ico');
+  
   if (!window.speechSynthesis) {
     alert(t('audio_not_available'));
     return;
   }
-  window.speechSynthesis.cancel();
+  
+  // Check if already speaking - if so, stop
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    lbl.textContent = t('listen');
+    ico.innerHTML = `<use href="#i-speaker"/>`;
+    return;
+  }
+  
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = S.language === 'English' ? 'en-PH' : 'fil-PH';
+  utt.lang = S.language === 'English' ? 'en-US' : 'fil-PH';
   utt.rate = 0.9;
-  utt.onend = () => { lbl.textContent = t('listen'); };
+  utt.onend = () => { 
+    lbl.textContent = t('listen');
+    ico.innerHTML = `<use href="#i-speaker"/>`;
+  };
   window.speechSynthesis.speak(utt);
   lbl.textContent = t('stop');
+  ico.innerHTML = `<use href="#i-speaker"/>`;
 }
 
 document.getElementById('speak-btn')?.addEventListener('click', speakOutput);
