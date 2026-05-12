@@ -8,9 +8,11 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
   
+  console.log('[v0] Checking API key - ELEVENLABS_API_KEY:', apiKey ? 'Found (' + apiKey.length + ' chars)' : 'NOT FOUND');
+  
   if (!apiKey) {
     // Return 503 so frontend knows to use browser TTS fallback
-    return res.status(503).json({ error: 'ElevenLabs not configured' });
+    return res.status(503).json({ error: 'ElevenLabs not configured - check ELEVENLABS_API_KEY env var' });
   }
 
   const { text, language } = req.body;
