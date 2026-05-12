@@ -1311,8 +1311,11 @@ async function speakOutput() {
   const lbl = document.getElementById('speak-lbl');
   const ico = document.getElementById('speak-ico');
 
+  console.log('[v0] speakOutput called, currentAudio:', !!currentAudio, 'isBrowserSpeaking:', isBrowserSpeaking);
+
   // If ElevenLabs audio is playing, stop it
   if (currentAudio && !currentAudio.paused) {
+    console.log('[v0] Stopping ElevenLabs audio');
     currentAudio.pause();
     currentAudio.currentTime = 0;
     currentAudio = null;
@@ -1323,6 +1326,7 @@ async function speakOutput() {
   
   // If browser TTS is playing, stop it
   if (isBrowserSpeaking) {
+    console.log('[v0] Stopping browser TTS');
     window.speechSynthesis.cancel();
     isBrowserSpeaking = false;
     lbl.textContent = t('listen');
@@ -1332,19 +1336,21 @@ async function speakOutput() {
 
   btn.disabled = true;
   lbl.textContent = t('loading_audio');
-  // Show spinner while loading
   ico.innerHTML = `<svg class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg>`;
 
   try {
+    console.log('[v0] Calling /api/speak...');
     const res = await fetch('/api/speak', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, language: S.language }),
     });
 
+    console.log('[v0] /api/speak response status:', res.status);
+
     if (!res.ok) {
-      // ElevenLabs not configured — fall back to browser TTS
       const e = await res.json().catch(() => ({}));
+      console.log('[v0] API error, falling back to browser TTS:', e.error);
       btn.disabled = false;
       ico.innerHTML = `<use href="#i-speaker"/>`;
       browserSpeak(text);
@@ -1352,7 +1358,8 @@ async function speakOutput() {
     }
 
     const data = await res.json();
-    const audioSrc = data.audioUrl; // Already a data URL from API
+    console.log('[v0] Got audio URL, length:', data.audioUrl?.length);
+    const audioSrc = data.audioUrl;
     currentAudio = new Audio(audioSrc);
     currentAudio.play();
     btn.disabled = false;
@@ -1360,6 +1367,7 @@ async function speakOutput() {
     ico.innerHTML = `<use href="#i-speaker"/>`;
 
     currentAudio.onended = () => {
+      console.log('[v0] ElevenLabs audio ended');
       lbl.textContent = t('listen');
       ico.innerHTML = `<use href="#i-speaker"/>`;
       btn.disabled = false;
@@ -1367,7 +1375,7 @@ async function speakOutput() {
     };
 
   } catch (err) {
-    // Fall back to browser TTS
+    console.log('[v0] Fetch error, falling back to browser TTS:', err.message);
     btn.disabled = false;
     ico.innerHTML = `<use href="#i-speaker"/>`;
     browserSpeak(text);
@@ -1375,7 +1383,7 @@ async function speakOutput() {
 }
 
 function browserSpeak(text) {
-  // Browser built-in TTS as fallback when ElevenLabs not available
+  console.log('[v0] browserSpeak called');
   const lbl = document.getElementById('speak-lbl');
   const ico = document.getElementById('speak-ico');
   
@@ -1390,17 +1398,20 @@ function browserSpeak(text) {
   // Set flag BEFORE starting speech
   isBrowserSpeaking = true;
   lbl.textContent = t('stop');
+  console.log('[v0] isBrowserSpeaking set to true');
   
   // Start speaking
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = S.language === 'english' ? 'en-US' : 'fil-PH';
   utt.rate = 0.9;
   utt.onend = () => { 
+    console.log('[v0] Browser TTS ended');
     lbl.textContent = t('listen');
     ico.innerHTML = `<use href="#i-speaker"/>`;
     isBrowserSpeaking = false;
   };
-  utt.onerror = () => {
+  utt.onerror = (e) => {
+    console.log('[v0] Browser TTS error:', e);
     lbl.textContent = t('listen');
     ico.innerHTML = `<use href="#i-speaker"/>`;
     isBrowserSpeaking = false;
