@@ -24,21 +24,21 @@ export default async function handler(req, res) {
   const maxChars = 2000;
   const truncatedText = text.slice(0, maxChars);
 
-  // Voice: Amaya - English Filipino Narrator
-  // Perfect for English, Filipino, and Taglish
-  const AMAYA_VOICE_ID = '3YMJvGH8HlrOcHJkHNKl';
+  // Default ElevenLabs voices (work on FREE tier)
+  // Library/community voices like Amaya require paid plan
+  const RACHEL_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel - clear, warm female voice
   
   const voices = {
     english: {
-      voiceId: AMAYA_VOICE_ID,
+      voiceId: RACHEL_VOICE_ID,
       model: 'eleven_multilingual_v2',
     },
     filipino: {
-      voiceId: AMAYA_VOICE_ID,
+      voiceId: RACHEL_VOICE_ID,
       model: 'eleven_multilingual_v2',
     },
     taglish: {
-      voiceId: AMAYA_VOICE_ID,
+      voiceId: RACHEL_VOICE_ID,
       model: 'eleven_multilingual_v2',
     },
   };

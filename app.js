@@ -1322,7 +1322,7 @@ async function speakOutput() {
   }
   
   // If browser TTS is playing, stop it
-  if (isBrowserSpeaking) {
+  if (isBrowserSpeaking || window.speechSynthesis.speaking) {
     window.speechSynthesis.cancel();
     isBrowserSpeaking = false;
     lbl.textContent = t('listen');
@@ -1330,9 +1330,8 @@ async function speakOutput() {
     return;
   }
 
-  btn.disabled = true;
+  // Only disable button when starting new speech (not when stopping)
   lbl.textContent = t('loading_audio');
-  // Show spinner while loading
   ico.innerHTML = `<svg class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg>`;
 
   try {
@@ -1343,39 +1342,33 @@ async function speakOutput() {
     });
 
     if (!res.ok) {
-      // ElevenLabs not configured — fall back to browser TTS
-      const e = await res.json().catch(() => ({}));
-      btn.disabled = false;
+      // ElevenLabs not available, use browser TTS
       ico.innerHTML = `<use href="#i-speaker"/>`;
       browserSpeak(text);
       return;
     }
 
     const data = await res.json();
-    const audioSrc = data.audioUrl; // Already a data URL from API
+    const audioSrc = data.audioUrl;
     currentAudio = new Audio(audioSrc);
     currentAudio.play();
-    btn.disabled = false;
     lbl.textContent = t('stop');
     ico.innerHTML = `<use href="#i-speaker"/>`;
 
     currentAudio.onended = () => {
       lbl.textContent = t('listen');
       ico.innerHTML = `<use href="#i-speaker"/>`;
-      btn.disabled = false;
       currentAudio = null;
     };
 
   } catch (err) {
-    // Fall back to browser TTS
-    btn.disabled = false;
+    // Error, use browser TTS
     ico.innerHTML = `<use href="#i-speaker"/>`;
     browserSpeak(text);
   }
 }
 
 function browserSpeak(text) {
-  // Browser built-in TTS as fallback when ElevenLabs not available
   const lbl = document.getElementById('speak-lbl');
   const ico = document.getElementById('speak-ico');
   
@@ -1387,7 +1380,7 @@ function browserSpeak(text) {
   // Cancel any existing speech first
   window.speechSynthesis.cancel();
   
-  // Set flag BEFORE starting speech
+  // Set flag and update UI
   isBrowserSpeaking = true;
   lbl.textContent = t('stop');
   
