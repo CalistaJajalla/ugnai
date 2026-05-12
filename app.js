@@ -1345,23 +1345,24 @@ async function speakOutput() {
     if (!res.ok) {
       // ElevenLabs not configured — fall back to browser TTS
       const e = await res.json().catch(() => ({}));
-      if (res.status === 503) {
-        browserSpeak(text);
-        return;
-      }
-      throw new Error(e.error || 'Hindi nagawa ang audio.');
+      btn.disabled = false;
+      ico.innerHTML = `<use href="#i-speaker"/>`;
+      browserSpeak(text);
+      return;
     }
 
     const data = await res.json();
     const audioSrc = data.audioUrl; // Already a data URL from API
     currentAudio = new Audio(audioSrc);
     currentAudio.play();
+    btn.disabled = false;
     lbl.textContent = t('stop');
     ico.innerHTML = `<use href="#i-speaker"/>`;
 
     currentAudio.onended = () => {
       lbl.textContent = t('listen');
       ico.innerHTML = `<use href="#i-speaker"/>`;
+      btn.disabled = false;
       currentAudio = null;
     };
 
