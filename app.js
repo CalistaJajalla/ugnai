@@ -1316,7 +1316,9 @@ function speakOutput() {
   }
 
   // If speaking, stop it
+  console.log('[v0] speakOutput - speaking:', window.speechSynthesis.speaking, 'isBrowserSpeaking:', isBrowserSpeaking);
   if (window.speechSynthesis.speaking || isBrowserSpeaking) {
+    console.log('[v0] Stopping speech');
     window.speechSynthesis.cancel();
     isBrowserSpeaking = false;
     lbl.textContent = t('listen');
