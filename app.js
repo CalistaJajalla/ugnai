@@ -1384,14 +1384,12 @@ function browserSpeak(text) {
     return;
   }
   
-  // If already speaking, stop it
-  if (isBrowserSpeaking) {
-    window.speechSynthesis.cancel();
-    isBrowserSpeaking = false;
-    lbl.textContent = t('listen');
-    ico.innerHTML = `<use href="#i-speaker"/>`;
-    return;
-  }
+  // Cancel any existing speech first
+  window.speechSynthesis.cancel();
+  
+  // Set flag BEFORE starting speech
+  isBrowserSpeaking = true;
+  lbl.textContent = t('stop');
   
   // Start speaking
   const utt = new SpeechSynthesisUtterance(text);
@@ -1402,9 +1400,12 @@ function browserSpeak(text) {
     ico.innerHTML = `<use href="#i-speaker"/>`;
     isBrowserSpeaking = false;
   };
+  utt.onerror = () => {
+    lbl.textContent = t('listen');
+    ico.innerHTML = `<use href="#i-speaker"/>`;
+    isBrowserSpeaking = false;
+  };
   window.speechSynthesis.speak(utt);
-  lbl.textContent = t('stop');
-  isBrowserSpeaking = true;
 }
 
 document.getElementById('speak-btn')?.addEventListener('click', speakOutput);
