@@ -1303,72 +1303,10 @@ function hookMem0() {
 let currentAudio = null;
 let isBrowserSpeaking = false;
 
-async function speakOutput() {
+function speakOutput() {
   const text = S.output;
   if (!text) { alert(t('no_output_yet')); return; }
 
-  const btn = document.getElementById('speak-btn');
-  const lbl = document.getElementById('speak-lbl');
-  const ico = document.getElementById('speak-ico');
-
-  // If ElevenLabs audio is playing, stop it
-  if (currentAudio && !currentAudio.paused) {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-    currentAudio = null;
-    lbl.textContent = t('listen');
-    ico.innerHTML = `<use href="#i-speaker"/>`;
-    return;
-  }
-  
-  // If browser TTS is playing, stop it
-  if (isBrowserSpeaking || window.speechSynthesis.speaking) {
-    window.speechSynthesis.cancel();
-    isBrowserSpeaking = false;
-    lbl.textContent = t('listen');
-    ico.innerHTML = `<use href="#i-speaker"/>`;
-    return;
-  }
-
-  // Only disable button when starting new speech (not when stopping)
-  lbl.textContent = t('loading_audio');
-  ico.innerHTML = `<svg class="spin-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg>`;
-
-  try {
-    const res = await fetch('/api/speak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, language: S.language }),
-    });
-
-    if (!res.ok) {
-      // ElevenLabs not available, use browser TTS
-      ico.innerHTML = `<use href="#i-speaker"/>`;
-      browserSpeak(text);
-      return;
-    }
-
-    const data = await res.json();
-    const audioSrc = data.audioUrl;
-    currentAudio = new Audio(audioSrc);
-    currentAudio.play();
-    lbl.textContent = t('stop');
-    ico.innerHTML = `<use href="#i-speaker"/>`;
-
-    currentAudio.onended = () => {
-      lbl.textContent = t('listen');
-      ico.innerHTML = `<use href="#i-speaker"/>`;
-      currentAudio = null;
-    };
-
-  } catch (err) {
-    // Error, use browser TTS
-    ico.innerHTML = `<use href="#i-speaker"/>`;
-    browserSpeak(text);
-  }
-}
-
-function browserSpeak(text) {
   const lbl = document.getElementById('speak-lbl');
   const ico = document.getElementById('speak-ico');
   
@@ -1376,15 +1314,20 @@ function browserSpeak(text) {
     alert(t('audio_not_available'));
     return;
   }
+
+  // If speaking, stop it
+  if (window.speechSynthesis.speaking || isBrowserSpeaking) {
+    window.speechSynthesis.cancel();
+    isBrowserSpeaking = false;
+    lbl.textContent = t('listen');
+    ico.innerHTML = `<use href="#i-speaker"/>`;
+    return;
+  }
   
-  // Cancel any existing speech first
-  window.speechSynthesis.cancel();
-  
-  // Set flag and update UI
+  // Start speaking
   isBrowserSpeaking = true;
   lbl.textContent = t('stop');
   
-  // Start speaking
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = S.language === 'english' ? 'en-US' : 'fil-PH';
   utt.rate = 0.9;
