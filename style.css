@@ -904,6 +904,81 @@ body {
   border-top-color: var(--cyan);
 }
 
+/* ── MOBILE OPTIMIZATIONS ─────────────── */
+@media (max-width: 480px) {
+  /* Textarea */
+  #notes {
+    font-size: 14px;
+    min-height: 120px;
+  }
+  
+  /* Card headers */
+  .lbl {
+    font-size: 11px;
+  }
+  
+  /* Word count */
+  #word-count, .out-wcount {
+    font-size: 10px;
+  }
+  
+  /* Tool buttons row */
+  .tool-row {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tool-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  
+  /* Audience cards */
+  .aud-grid {
+    gap: 8px;
+  }
+  .act {
+    padding: 10px 8px;
+    font-size: 11px;
+  }
+  .act svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* Math mode panel */
+  .math-panel {
+    padding: 14px 12px;
+  }
+  .math-text-field {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+  .math-mode-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  .math-eq-box {
+    font-size: 18px;
+    padding: 12px 10px;
+  }
+  .math-content-box {
+    font-size: 12.5px;
+    padding: 10px 12px;
+  }
+  
+  /* Output box */
+  #output {
+    font-size: 13px;
+    min-height: 100px;
+  }
+  
+  /* Action buttons */
+  .btn-primary, .btn-outline {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+}
+
 /* ── LANGUAGE PICKER MOBILE ─────────────── */
 @media (max-width: 480px) {
   .langpick-card {
