@@ -101,4 +101,40 @@ May Science experiment tayo sa Miyerkules. Magdala ng: 1 itlog, 1 baso ng suka, 
 
 ---
 
+## Version History
+
+### Ver 3.12 (05/15/2026)
+- Restored ElevenLabs TTS with Rachel voice (multilingual model)
+- Fixed stop button for audio playback
+- Mobile UI optimizations: smaller header, better padding, touch-friendly buttons
+- Tutorial modal now positions at bottom on mobile devices
+
+### Ver 3.11 (05/12/2026)
+- Added Listen button (Pakinggan) for text-to-speech output
+- ElevenLabs integration with browser TTS fallback
+- Stop/play toggle for audio controls
+
+### Ver 3.10 (05/10/2026)
+- Added Math Mode for teaching preparation
+- Photo capture for equations (OCR)
+- Generate explanations or word problems from equations
+- Filipino-context word problems for local relevance
+
+### Ver 3.9 (05/08/2026)
+- Voice input (Speak button) for hands-free note entry
+- Camera OCR for capturing handwritten notes
+- PDF export for generated outputs
+
+### Ver 3.8 (05/05/2026)
+- Interactive tutorial for first-time users
+- History panel to view past generations
+- Improved demo flow and onboarding
+
+### Ver 3.7 (05/01/2026)
+- Language picker (English, Filipino, Taglish)
+- Para sa Lahat: generate all 4 audience versions at once
+- UI polish and accessibility improvements
+
+---
+
 *UGNai — Women in AI Accelerator 2026*
