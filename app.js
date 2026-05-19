@@ -1093,6 +1093,7 @@ function initVoice() {
 
   btn?.addEventListener('click', (e) => {
     e.preventDefault();
+    console.log('[v0] Voice button clicked, isRecording:', isRecording);
     if (isRecording) {
       stopRecording();
     } else {
@@ -1103,11 +1104,14 @@ function initVoice() {
 
 function startRecording() {
   if (!recognition) {
+    console.log('[v0] recognition is null');
     alert(t('voice_not_available'));
     return;
   }
   const btn = document.getElementById('voice-btn');
   const label = document.getElementById('voice-label');
+  
+  console.log('[v0] startRecording - language:', S.language);
   
   // Set language based on current setting
   recognition.lang = S.language === 'English' ? 'en-US' : 'fil-PH';
@@ -1120,8 +1124,9 @@ function startRecording() {
   
   try {
     recognition.start();
-    // Note: isRecording and UI update happens in onstart handler
+    console.log('[v0] recognition.start() called successfully');
   } catch (e) {
+    console.log('[v0] recognition.start() error:', e.message);
     if (e.message?.includes('already started')) {
       recognition.stop();
       setTimeout(() => {
@@ -1381,7 +1386,7 @@ function browserSpeak(text) {
   lbl.textContent = t('stop');
   
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = S.language === 'english' ? 'en-US' : 'fil-PH';
+  utt.lang = S.language === 'English' ? 'en-US' : 'fil-PH';
   utt.rate = 0.9;
   utt.onend = () => { 
     lbl.textContent = t('listen');
